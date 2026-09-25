@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alerts & Notifications - FarmGuard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-container">
+      <a href="index.html" class="logo">
+        <!--<div class="logo-icon">🌾</div>-->
+        <div class="logo-icon">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L4 5V10C4 15 7.5 19.5 12 22C16.5 19.5 20 15 20 10V5L12 2Z"/>
+          </svg>
+        </div>
+        <span>FarmGuard</span>
+      </a>
+      
+      <nav class="nav">
+        <div class="nav-links">
+          <a href="index.html" class="nav-link">Home</a>
+          <a href="analytics.html" class="nav-link">Analytics</a>
+          <a href="audit-log.html" class="nav-link">Audit Log</a>
+          <a href="alerts.html" class="nav-link active">Alerts</a>
+        </div>
+        <a href="login.html" class="btn btn-primary">Login</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="section-container">
+      <div class="page-header" style="margin-bottom: 2rem;">
+        <h1>Alerts & Notifications</h1>
+        <p style="color: var(--muted-foreground);">Stay informed about withdrawal periods, compliance issues, and system updates</p>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="stats-row" style="margin-bottom: 2rem;">
+        <div class="stat-card">
+          <div class="stat-icon warning">⏳</div>
+          <div class="stat-info">
+            <h3>Active Withdrawals</h3>
+            <div class="value" id="activeWithdrawalsCount">0</div>
+            <div class="trend" id="withdrawalsTrend">Loading...</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon accent">⚠️</div>
+          <div class="stat-info">
+            <h3>Compliance Alerts</h3>
+            <div class="value" id="complianceAlertsCount">0</div>
+            <div class="trend" id="complianceTrend">Loading...</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon primary">🔔</div>
+          <div class="stat-info">
+            <h3>Unread Notifications</h3>
+            <div class="value" id="notificationsCount">0</div>
+            <div class="trend" id="notificationsTrend">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <div class="tabs-list">
+          <button class="tab active" onclick="showTab('withdrawal')">⏳ Withdrawal Alerts</button>
+          <button class="tab" onclick="showTab('compliance')">⚠️ Compliance Alerts</button>
+          <button class="tab" onclick="showTab('notifications')">🔔 Notifications</button>
+        </div>
+      </div>
+
+      <!-- Withdrawal Alerts Tab -->
+      <div id="withdrawal-tab" class="tab-content">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Withdrawal Period Alerts</h3>
+              <p class="card-description">Active and upcoming withdrawal periods for your livestock</p>
+            </div>
+          </div>
+          <div class="card-content" id="withdrawalAlertsContent">
+            <p style="text-align: center; padding: 2rem; color: var(--muted-foreground);">Loading withdrawal alerts...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compliance Alerts Tab -->
+      <div id="compliance-tab" class="tab-content" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Compliance Alerts</h3>
+              <p class="card-description">Issues requiring immediate attention</p>
+            </div>
+          </div>
+          <div class="card-content" id="complianceAlertsContent">
+            <p style="text-align: center; padding: 2rem; color: var(--muted-foreground);">Loading compliance alerts...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notifications Tab -->
+      <div id="notifications-tab" class="tab-content" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">System Notifications</h3>
+              <p class="card-description">Updates, approvals, and system messages</p>
+            </div>
+          </div>
+          <div class="card-content" id="notificationsContent">
+            <p style="text-align: center; padding: 2rem; color: var(--muted-foreground);">Loading notifications...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-bottom">
+        <span>© 2026 FarmGuard. All rights reserved.</span>
+        <span>AI-Assisted Livestock Antimicrobial Use & Food Safety Platform</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Fetch alerts data on page load
+    async function loadAlerts() {
+      try {
+        const response = await fetch('/api/alerts', {
+          credentials: 'include'
+        });
+        
+        if (response.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+        
+        const data = await response.json();
+        
+        if (data && data.length > 0) {
+          // Group alerts by type
+          const withdrawalAlerts = data.filter(a => a.alert_type === 'withdrawal' || (a.title && a.title.toLowerCase().includes('withdrawal')));
+          const complianceAlerts = data.filter(a => a.alert_type === 'compliance' || (a.title && (a.title.toLowerCase().includes('rejected') || a.title.toLowerCase().includes('compliance'))));
+          const notifications = data.filter(a => a.alert_type === 'notification' || (!withdrawalAlerts.includes(a) && !complianceAlerts.includes(a)));
+          
+          // Update stats
+          document.getElementById('activeWithdrawalsCount').textContent = withdrawalAlerts.length;
+          const urgentWithdrawals = withdrawalAlerts.filter(a => a.priority === 'urgent' || a.priority === 'high').length;
+          document.getElementById('withdrawalsTrend').textContent = urgentWithdrawals > 0 ? `${urgentWithdrawals} urgent` : 'All clear';
+          
+          document.getElementById('complianceAlertsCount').textContent = complianceAlerts.length;
+          const criticalCompliance = complianceAlerts.filter(a => a.priority === 'urgent' || a.priority === 'high').length;
+          document.getElementById('complianceTrend').textContent = criticalCompliance > 0 ? `${criticalCompliance} critical` : 'No issues';
+          
+          const unreadNotifications = notifications.filter(n => !n.is_read).length;
+          document.getElementById('notificationsCount').textContent = unreadNotifications;
+          document.getElementById('notificationsTrend').textContent = unreadNotifications > 0 ? 'New updates' : 'All read';
+          
+          // Update withdrawal alerts tab
+          updateWithdrawalAlertsTab(withdrawalAlerts);
+          
+          // Update compliance alerts tab
+          updateComplianceAlertsTab(complianceAlerts);
+          
+          // Update notifications tab
+          updateNotificationsTab(notifications);
+        } else {
+          // No alerts
+          document.getElementById('activeWithdrawalsCount').textContent = '0';
+          document.getElementById('withdrawalsTrend').textContent = 'No active withdrawals';
+          document.getElementById('complianceAlertsCount').textContent = '0';
+          document.getElementById('complianceTrend').textContent = 'No issues';
+          document.getElementById('notificationsCount').textContent = '0';
+          document.getElementById('notificationsTrend').textContent = 'No notifications';
+          
+          document.getElementById('withdrawalAlertsContent').innerHTML = '<p style="text-align: center; padding: 2rem; color: var(--muted-foreground);">No active withdrawal periods. All clear! ✅</p>';
+          document.getElementById('complianceAlertsContent').innerHTML = '<p style="text-align: center; padding: 2rem; color: var(--muted-foreground);">No compliance issues. Great job! ✅</p>';
+          document.getElementById('notificationsContent').innerHTML = '<p style="text-align: center; padding: 2rem; color: var(--muted-foreground);">No notifications at this time.</p>';
+        }
+      } catch (error) {
+        console.error('Error loading alerts:', error);
+      }
+    }
+    
+    function updateWithdrawalAlertsTab(alerts) {
+      const container = document.getElementById('withdrawalAlertsContent');
+      if (!container) return;
+      
+      if (alerts.length === 0) {
+        container.innerHTML = '<p style="text-align: center; padding: 2rem; color: var(--muted-foreground);">No active withdrawal periods. All clear! ✅</p>';
+        return;
+      }
+      
+      // Sort by urgency (urgent first, then by end date)
+      alerts.sort((a, b) => {
+        if (a.priority === 'urgent' && b.priority !== 'urgent') return -1;
+        if (a.priority !== 'urgent' && b.priority === 'urgent') return 1;
+        if (a.withdrawal_end_date && b.withdrawal_end_date) {
+          return new Date(a.withdrawal_end_date) - new Date(b.withdrawal_end_date);
+        }
+        return 0;
+      });
+      
+      container.innerHTML = '';
+      alerts.forEach(alert => {
+        const priorityClass = alert.priority === 'urgent' ? 'urgent' : 
+                            alert.priority === 'high' ? 'warning' : 'info';
+        const badgeClass = alert.priority === 'urgent' ? 'badge-danger' : 
+                         alert.priority === 'high' ? 'badge-warning' : 'badge-info';
+        const badgeText = alert.priority === 'urgent' ? 'Urgent' : 
+                         alert.priority === 'high' ? 'High' : 'Normal';
+        
+        let endDateText = 'Soon';
+        if (alert.withdrawal_end_date) {
+          const endDate = new Date(alert.withdrawal_end_date);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const daysRemaining = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+          
+          if (daysRemaining <= 0) {
+            endDateText = 'Ended';
+          } else if (daysRemaining === 1) {
+            endDateText = 'Tomorrow';
+          } else {
+            endDateText = `${daysRemaining} days remaining`;
+          }
+        }
+        
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert-item';
+        alertDiv.innerHTML = `
+          <div class="alert-icon ${priorityClass}">${priorityClass === 'urgent' ? '🚨' : priorityClass === 'warning' ? '⚠️' : 'ℹ️'}</div>
+          <div class="alert-content">
+            <h4>${alert.title}</h4>
+            <p>${alert.message}</p>
+            <div class="alert-meta">
+              <span>📅 ${endDateText}</span>
+              ${alert.withdrawal_end_date ? `<span>•</span><span>Ends: ${new Date(alert.withdrawal_end_date).toLocaleDateString()}</span>` : ''}
+              <span>•</span>
+              <span class="badge ${badgeClass}">${badgeText}</span>
+            </div>
+          </div>
+        `;
+        container.appendChild(alertDiv);
+      });
+    }
+    
+    function updateComplianceAlertsTab(alerts) {
+      const container = document.getElementById('complianceAlertsContent');
+      if (!container) return;
+      
+      if (alerts.length === 0) {
+        container.innerHTML = '<p style="text-align: center; padding: 2rem; color: var(--muted-foreground);">No compliance issues. Great job! ✅</p>';
+        return;
+      }
+      
+      container.innerHTML = '';
+      alerts.forEach(alert => {
+        const priorityClass = alert.priority === 'urgent' || alert.priority === 'high' ? 'urgent' : 'warning';
+        const badgeClass = alert.priority === 'urgent' || alert.priority === 'high' ? 'badge-danger' : 'badge-warning';
+        const badgeText = alert.priority === 'urgent' || alert.priority === 'high' ? 'Critical' : 'High';
+        
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert-item';
+        alertDiv.innerHTML = `
+          <div class="alert-icon ${priorityClass}">🚨</div>
+          <div class="alert-content">
+            <h4>${alert.title}</h4>
+            <p>${alert.message}</p>
+            <div class="alert-meta">
+              <span>📅 ${formatDate(alert.created_at)}</span>
+              ${alert.entry_id ? `<span>•</span><span>Entry: ${alert.entry_id}</span>` : ''}
+              <span>•</span>
+              <span class="badge ${badgeClass}">${badgeText}</span>
+            </div>
+          </div>
+        `;
+        container.appendChild(alertDiv);
+      });
+    }
+    
+    function updateNotificationsTab(notifications) {
+      const container = document.getElementById('notificationsContent');
+      if (!container) return;
+      
+      if (notifications.length === 0) {
+        container.innerHTML = '<p style="text-align: center; padding: 2rem; color: var(--muted-foreground);">No notifications at this time.</p>';
+        return;
+      }
+      
+      container.innerHTML = '';
+      notifications.forEach(notification => {
+        const icon = notification.title && notification.title.toLowerCase().includes('approved') ? '✓' :
+                    notification.title && notification.title.toLowerCase().includes('rejected') ? '✗' :
+                    notification.priority === 'urgent' ? '🚨' : 'ℹ️';
+        const iconClass = notification.title && notification.title.toLowerCase().includes('approved') ? 'success' :
+                         notification.title && notification.title.toLowerCase().includes('rejected') ? 'urgent' : 'info';
+        const badgeClass = notification.title && notification.title.toLowerCase().includes('approved') ? 'badge-success' :
+                          notification.title && notification.title.toLowerCase().includes('rejected') ? 'badge-danger' : 'badge-info';
+        const badgeText = notification.title && notification.title.toLowerCase().includes('approved') ? 'Success' :
+                         notification.title && notification.title.toLowerCase().includes('rejected') ? 'Action Required' : 'Info';
+        
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert-item';
+        alertDiv.innerHTML = `
+          <div class="alert-icon ${iconClass}">${icon}</div>
+          <div class="alert-content">
+            <h4>${notification.title}</h4>
+            <p>${notification.message}</p>
+            <div class="alert-meta">
+              <span>📅 ${formatDate(notification.created_at)}</span>
+              <span>•</span>
+              <span class="badge ${badgeClass}">${badgeText}</span>
+            </div>
+          </div>
+        `;
+        container.appendChild(alertDiv);
+      });
+    }
+    
+    
+    function formatDate(dateString) {
+      if (!dateString) return 'Recently';
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+      
+      if (diffMins < 60) return `${diffMins} minutes ago`;
+      if (diffHours < 24) return `${diffHours} hours ago`;
+      if (diffDays < 7) return `${diffDays} days ago`;
+      return date.toLocaleDateString();
+    }
+    
+    function showTab(tabName) {
+      // Hide all tab contents
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.style.display = 'none';
+      });
+      
+      // Remove active class from all tabs
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Show selected tab content
+      document.getElementById(tabName + '-tab').style.display = 'block';
+      
+      // Add active class to clicked tab
+      event.target.classList.add('active');
+    }
+    
+    // Load alerts when page loads
+    loadAlerts();
+  </script>
+</body>
+</html>

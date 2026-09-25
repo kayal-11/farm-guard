@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics - FarmGuard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-container">
+      <a href="index.html" class="logo">
+        <!--<div class="logo-icon">🌾</div>-->
+        <div class="logo-icon">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L4 5V10C4 15 7.5 19.5 12 22C16.5 19.5 20 15 20 10V5L12 2Z"/>
+          </svg>
+        </div>
+        <span>FarmGuard</span>
+      </a>
+      
+      <nav class="nav">
+        <div class="nav-links">
+          <a href="index.html" class="nav-link">Home</a>
+          <a href="analytics.html" class="nav-link active">Analytics</a>
+          <a href="audit-log.html" class="nav-link">Audit Log</a>
+          <a href="alerts.html" class="nav-link">Alerts</a>
+        </div>
+        <a href="login.html" class="btn btn-primary">Login</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="section-container">
+      <div class="page-header" style="margin-bottom: 2rem;">
+        <h1>Analytics Dashboard</h1>
+        <p style="color: var(--muted-foreground);">Comprehensive insights into antimicrobial usage and compliance metrics</p>
+        <div style="margin-top: 1rem;">
+          <button id="refreshBtn" class="btn btn-outline btn-sm" onclick="refreshAnalytics()">
+            🔄 Refresh Data
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row" style="margin-bottom: 2rem;">
+        <div class="stat-card">
+          <div class="stat-icon primary">📊</div>
+          <div class="stat-info">
+            <h3>Total AMU Entries</h3>
+            <div class="value" id="totalEntries">0</div>
+            <div class="trend up" id="entriesTrend">Loading...</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon success">✓</div>
+          <div class="stat-info">
+            <h3>Compliance Rate</h3>
+            <div class="value" id="complianceRate">0%</div>
+            <div class="trend up" id="complianceTrend">Loading...</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon warning">⏳</div>
+          <div class="stat-info">
+            <h3>Active Violations</h3>
+            <div class="value" id="activeViolations">0</div>
+            <div class="trend" id="violationsTrend">Loading...</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon accent">🏠</div>
+          <div class="stat-info">
+            <h3>Active Farms</h3>
+            <div class="value" id="activeFarms">0</div>
+            <div class="trend up" id="farmsTrend">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Grid -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+        <!-- AMU Entries Over Time -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">AMU Entries Over Time</h3>
+              <p class="card-description">Monthly trend of antimicrobial usage entries</p>
+            </div>
+          </div>
+          <div class="card-content">
+            <canvas id="entriesOverTimeChart" style="max-height: 300px;"></canvas>
+          </div>
+        </div>
+
+        <!-- Compliance by Region -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Compliance by Region</h3>
+              <p class="card-description">Regional compliance comparison</p>
+            </div>
+          </div>
+          <div class="card-content">
+            <canvas id="complianceByRegionChart" style="max-height: 300px;"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Drug Usage & Species Distribution -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+        <!-- Drug Usage Distribution -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Drug Usage Distribution</h3>
+              <p class="card-description">Most commonly used antimicrobials</p>
+            </div>
+          </div>
+          <div class="card-content">
+            <div id="drugUsageDistribution">
+              <!-- Dynamic content will be inserted here -->
+              <div style="text-align: center; padding: 2rem;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">💊</div>
+                <div>Loading drug usage data...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Species Distribution -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Species Distribution</h3>
+              <p class="card-description">AMU entries by animal species</p>
+            </div>
+          </div>
+          <div class="card-content">
+            <canvas id="speciesDistributionChart" style="max-height: 200px;"></canvas>
+            <div id="speciesLegend" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+              <!-- Dynamic content will be inserted here -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Violations & Trends -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">Monthly Violation Trends</h3>
+            <p class="card-description">Tracking compliance violations over time</p>
+          </div>
+        </div>
+        <div class="card-content">
+          <canvas id="violationTrendsChart" style="max-height: 300px;"></canvas>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">Recent Activity</h3>
+            <p class="card-description">Latest AMU entries across the system</p>
+          </div>
+        </div>
+        <div class="card-content">
+          <div id="recentActivity">
+            <!-- Dynamic content will be inserted here -->
+            <div style="text-align: center; padding: 2rem;">
+              <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⏳</div>
+              <div>Loading recent activity...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-bottom">
+        <span>© 2026 FarmGuard. All rights reserved.</span>
+        <span>AI-Assisted Livestock Antimicrobial Use & Food Safety Platform</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Analytics Script -->
+  <script>
+    // Function to refresh analytics data
+    function refreshAnalytics() {
+      const btn = document.getElementById('refreshBtn');
+      const originalText = btn.textContent;
+      btn.textContent = '🔄 Refreshing...';
+      btn.disabled = true;
+      
+      loadAnalyticsData().finally(() => {
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }, 1000);
+      });
+    }
+
+    // Function to load analytics data
+    async function loadAnalyticsData() {
+      try {
+        let stats = null;
+        let drugAnalytics = null;
+        let recentEntries = null;
+
+        // Try fetching authority dashboard first
+        try {
+          const res = await fetch('/api/authority/dashboard', { credentials: 'include' });
+          if (res.ok) {
+            const data = await res.json();
+            stats = data.stats;
+            drugAnalytics = data.drug_analytics;
+            recentEntries = data.recent_entries;
+          }
+        } catch (e) {
+          console.warn('Authority endpoint not accessible, trying public-stats');
+        }
+
+        // Fallback to public-stats if authority dashboard not available
+        if (!stats) {
+          try {
+            const res = await fetch('/api/public-stats');
+            if (res.ok) {
+              const pub = await res.json();
+              stats = {
+                total_entries: pub.active_entries,
+                entries_trend: pub.entries_trend,
+                compliance_rate: pub.compliance_rate,
+                compliance_trend: pub.compliance_trend,
+                violations: pub.violations,
+                violations_trend: pub.violations_trend,
+                farms: pub.total_farms,
+                farms_trend: pub.farms_trend
+              };
+            }
+          } catch (e) {
+            console.error('Failed to fetch public stats:', e);
+          }
+        }
+
+        if (stats) {
+          // Update Total AMU Entries card
+          document.getElementById('totalEntries').textContent = (stats.total_entries || 0).toLocaleString();
+          const entriesTrend = document.getElementById('entriesTrend');
+          entriesTrend.textContent = stats.entries_trend || 'N/A';
+          entriesTrend.className = (stats.entries_trend && stats.entries_trend.includes('↓')) ? 'trend down' : 'trend up';
+
+          // Update Compliance Rate card
+          document.getElementById('complianceRate').textContent = (stats.compliance_rate !== undefined && stats.compliance_rate !== null ? stats.compliance_rate : 0).toFixed(1) + '%';
+          const complianceTrend = document.getElementById('complianceTrend');
+          complianceTrend.textContent = stats.compliance_trend || 'N/A';
+          complianceTrend.className = (stats.compliance_trend && stats.compliance_trend.includes('↓')) ? 'trend down' : 'trend up';
+
+          // Update Active Violations card
+          document.getElementById('activeViolations').textContent = (stats.violations || 0).toLocaleString();
+          const violationsTrend = document.getElementById('violationsTrend');
+          violationsTrend.textContent = stats.violations_trend || 'N/A';
+          violationsTrend.className = (stats.violations_trend && stats.violations_trend.includes('↑')) ? 'trend down' : 'trend up';
+
+          // Update Active Farms card
+          document.getElementById('activeFarms').textContent = (stats.farms || 0).toLocaleString();
+          const farmsTrend = document.getElementById('farmsTrend');
+          farmsTrend.textContent = stats.farms_trend || '0 new registrations';
+          farmsTrend.className = 'trend up';
+        }
+
+        // Update drug analytics & recent activity if available
+        if (drugAnalytics && drugAnalytics.length > 0) {
+          updateDrugAnalytics(drugAnalytics);
+        }
+        if (recentEntries && recentEntries.length > 0) {
+          updateRecentActivity(recentEntries);
+        }
+
+        // Load chart data
+        loadChartData();
+      } catch (error) {
+        console.error('Error loading analytics:', error);
+      }
+    }
+    
+    // Load detailed chart data
+    async function loadChartData() {
+      try {
+        const response = await fetch('/api/analytics', {
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Draw charts
+          if (data.monthly_entries) {
+            drawEntriesOverTimeChart(data.monthly_entries);
+          }
+          if (data.regional_compliance) {
+            drawComplianceByRegionChart(data.regional_compliance);
+          }
+          if (data.species_distribution) {
+            drawSpeciesDistributionChart(data.species_distribution);
+          }
+          if (data.monthly_violations) {
+            drawViolationTrendsChart(data.monthly_violations);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading chart data:', error);
+      }
+    }
+    
+    // Draw AMU Entries Over Time (Bar Chart)
+    function drawEntriesOverTimeChart(data) {
+      const canvas = document.getElementById('entriesOverTimeChart');
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext('2d');
+      const width = canvas.parentElement.clientWidth - 40;
+      const height = 250;
+      canvas.width = width;
+      canvas.height = height;
+      
+      const padding = { top: 20, right: 20, bottom: 50, left: 50 };
+      const chartWidth = width - padding.left - padding.right;
+      const chartHeight = height - padding.top - padding.bottom;
+      
+      ctx.clearRect(0, 0, width, height);
+      
+      const maxValue = Math.max(...data.map(d => d.count), 1);
+      const barWidth = chartWidth / data.length * 0.7;
+      const barSpacing = chartWidth / data.length;
+      
+      // Draw grid lines
+      ctx.strokeStyle = '#e5e7eb';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 5; i++) {
+        const y = padding.top + (chartHeight / 5) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(width - padding.right, y);
+        ctx.stroke();
+        
+        const value = maxValue - (maxValue / 5) * i;
+        ctx.fillStyle = '#6b7280';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(Math.round(value).toString(), padding.left - 10, y + 4);
+      }
+      
+      // Draw bars
+      data.forEach((point, index) => {
+        const x = padding.left + barSpacing * index + (barSpacing - barWidth) / 2;
+        const barHeight = (point.count / maxValue) * chartHeight;
+        const y = padding.top + chartHeight - barHeight;
+        
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillRect(x, y, barWidth, barHeight);
+        
+        // X-axis labels
+        ctx.fillStyle = '#6b7280';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.save();
+        ctx.translate(x + barWidth / 2, height - padding.bottom + 15);
+        ctx.rotate(-Math.PI / 4);
+        ctx.fillText(point.month, 0, 0);
+        ctx.restore();
+      });
+    }
+    
+    // Draw Compliance by Region (Horizontal Bar Chart)
+    function drawComplianceByRegionChart(data) {
+      const canvas = document.getElementById('complianceByRegionChart');
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext('2d');
+      const width = canvas.parentElement.clientWidth - 40;
+      const height = 250;
+      canvas.width = width;
+      canvas.height = height;
+      
+      const padding = { top: 20, right: 100, bottom: 20, left: 120 };
+      const chartWidth = width - padding.left - padding.right;
+      const chartHeight = height - padding.top - padding.bottom;
+      
+      ctx.clearRect(0, 0, width, height);
+      
+      const barHeight = chartHeight / data.length * 0.7;
+      const barSpacing = chartHeight / data.length;
+      
+      data.forEach((region, index) => {
+        const y = padding.top + barSpacing * index + (barSpacing - barHeight) / 2;
+        const barWidth = (region.compliance_rate / 100) * chartWidth;
+        
+        // Draw bar
+        ctx.fillStyle = region.compliance_rate >= 90 ? '#22c55e' : 
+                       region.compliance_rate >= 80 ? '#f59e0b' : '#ef4444';
+        ctx.fillRect(padding.left, y, barWidth, barHeight);
+        
+        // Draw label
+        ctx.fillStyle = '#1f2937';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(region.region, 10, y + barHeight / 2 + 4);
+        
+        // Draw percentage
+        ctx.fillStyle = '#6b7280';
+        ctx.textAlign = 'right';
+        ctx.fillText(region.compliance_rate + '%', width - padding.right + 90, y + barHeight / 2 + 4);
+      });
+    }
+    
+    // Draw Species Distribution (Pie Chart)
+    function drawSpeciesDistributionChart(data) {
+      const canvas = document.getElementById('speciesDistributionChart');
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext('2d');
+      const width = canvas.parentElement.clientWidth - 40;
+      const height = 200;
+      canvas.width = width;
+      canvas.height = height;
+      
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const radius = Math.min(width, height) / 2 - 20;
+      
+      ctx.clearRect(0, 0, width, height);
+      
+      const total = data.reduce((sum, s) => sum + s.count, 0);
+      if (total === 0) {
+        ctx.fillStyle = '#9ca3af';
+        ctx.font = '14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('No data available', centerX, centerY);
+        return;
+      }
+      
+      let currentAngle = -Math.PI / 2;
+      const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+      
+      // Update legend
+      const legend = document.getElementById('speciesLegend');
+      if (legend) {
+        legend.innerHTML = '';
+        data.forEach((species, index) => {
+          const div = document.createElement('div');
+          div.style.cssText = 'display: flex; align-items: center; gap: 0.5rem;';
+          div.innerHTML = `
+            <span style="display: inline-block; width: 12px; height: 12px; background: ${colors[index % colors.length]}; border-radius: 2px;"></span>
+            <span style="font-size: 0.875rem;">${species.species} (${species.percentage}%)</span>
+          `;
+          legend.appendChild(div);
+        });
+      }
+      
+      // Draw pie slices
+      data.forEach((species, index) => {
+        const sliceAngle = (species.count / total) * Math.PI * 2;
+        
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
+        ctx.closePath();
+        ctx.fillStyle = colors[index % colors.length];
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        if (species.count > 0) {
+          const labelAngle = currentAngle + sliceAngle / 2;
+          const labelX = centerX + Math.cos(labelAngle) * (radius * 0.7);
+          const labelY = centerY + Math.sin(labelAngle) * (radius * 0.7);
+          
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 11px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(species.percentage + '%', labelX, labelY);
+        }
+        
+        currentAngle += sliceAngle;
+      });
+    }
+    
+    // Draw Monthly Violation Trends (Area Chart)
+    function drawViolationTrendsChart(data) {
+      const canvas = document.getElementById('violationTrendsChart');
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext('2d');
+      const width = canvas.parentElement.clientWidth - 40;
+      const height = 250;
+      canvas.width = width;
+      canvas.height = height;
+      
+      const padding = { top: 20, right: 20, bottom: 50, left: 50 };
+      const chartWidth = width - padding.left - padding.right;
+      const chartHeight = height - padding.top - padding.bottom;
+      
+      ctx.clearRect(0, 0, width, height);
+      
+      const maxValue = Math.max(...data.map(d => d.violations), 1);
+      
+      // Draw grid lines
+      ctx.strokeStyle = '#e5e7eb';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 5; i++) {
+        const y = padding.top + (chartHeight / 5) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(width - padding.right, y);
+        ctx.stroke();
+        
+        const value = maxValue - (maxValue / 5) * i;
+        ctx.fillStyle = '#6b7280';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(Math.round(value).toString(), padding.left - 10, y + 4);
+      }
+      
+      // Draw area
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.3)';
+      ctx.beginPath();
+      ctx.moveTo(padding.left, padding.top + chartHeight);
+      
+      data.forEach((point, index) => {
+        const x = padding.left + (chartWidth / (data.length - 1)) * index;
+        const y = padding.top + chartHeight - ((point.violations / maxValue) * chartHeight);
+        ctx.lineTo(x, y);
+      });
+      
+      ctx.lineTo(width - padding.right, padding.top + chartHeight);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Draw line
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      
+      data.forEach((point, index) => {
+        const x = padding.left + (chartWidth / (data.length - 1)) * index;
+        const y = padding.top + chartHeight - ((point.violations / maxValue) * chartHeight);
+        
+        if (index === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+      ctx.stroke();
+      
+      // Draw points and labels
+      data.forEach((point, index) => {
+        const x = padding.left + (chartWidth / (data.length - 1)) * index;
+        const y = padding.top + chartHeight - ((point.violations / maxValue) * chartHeight);
+        
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // X-axis labels
+        ctx.fillStyle = '#6b7280';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.save();
+        ctx.translate(x, height - padding.bottom + 15);
+        ctx.rotate(-Math.PI / 4);
+        ctx.fillText(point.month, 0, 0);
+        ctx.restore();
+      });
+    }
+
+    // Function to update drug analytics
+    function updateDrugAnalytics(drugAnalytics) {
+      const container = document.getElementById('drugUsageDistribution');
+      if (!container) return;
+      
+      let html = '';
+      
+      // Sort by percentage descending
+      const sortedDrugs = [...drugAnalytics].sort((a, b) => b.percentage - a.percentage);
+      
+      // Take top 5
+      const topDrugs = sortedDrugs.slice(0, 5);
+      const otherPercentage = 100 - topDrugs.reduce((sum, drug) => sum + drug.percentage, 0);
+      
+      // Define colors for progress bars
+      const colors = ['var(--primary)', 'var(--secondary)', 'var(--success)', 'var(--warning)', 'var(--danger)', 'var(--muted-foreground)'];
+      
+      // Add each drug
+      topDrugs.forEach((drug, index) => {
+        html += `
+          <div style="margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+              <span style="font-size: 0.875rem;">${drug.drug_name}</span>
+              <span style="font-size: 0.875rem; font-weight: 600;">${drug.percentage.toFixed(1)}%</span>
+            </div>
+            <div style="background: var(--muted); border-radius: 9999px; height: 8px; overflow: hidden;">
+              <div style="background: ${colors[index % colors.length]}; height: 100%; width: ${drug.percentage}%; border-radius: 9999px;"></div>
+            </div>
+          </div>
+        `;
+      });
+      
+      // Add "Other" category if needed
+      if (otherPercentage > 0) {
+        html += `
+          <div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+              <span style="font-size: 0.875rem;">Other</span>
+              <span style="font-size: 0.875rem; font-weight: 600;">${otherPercentage.toFixed(1)}%</span>
+            </div>
+            <div style="background: var(--muted); border-radius: 9999px; height: 8px; overflow: hidden;">
+              <div style="background: var(--muted-foreground); height: 100%; width: ${otherPercentage}%; border-radius: 9999px;"></div>
+            </div>
+          </div>
+        `;
+      }
+      
+      container.innerHTML = html;
+    }
+
+    // Function to update recent activity
+    function updateRecentActivity(entries) {
+      const container = document.getElementById('recentActivity');
+      if (!container) return;
+      
+      let html = '';
+      
+      // Take latest 5 entries
+      const recentEntries = entries.slice(0, 5);
+      
+      recentEntries.forEach(entry => {
+        const statusClass = entry.status === 'approved' ? 'badge-success' : 
+                           entry.status === 'pending' ? 'badge-warning' : 'badge-danger';
+        const statusText = entry.status.charAt(0).toUpperCase() + entry.status.slice(1);
+        const date = new Date(entry.created_at).toLocaleDateString();
+        
+        html += `
+          <div style="display: flex; align-items: start; padding: 1rem; border-bottom: 1px solid var(--border);">
+            <div style="margin-right: 1rem;">
+              <div style="width: 40px; height: 40px; border-radius: 8px; background: ${getStatusColor(entry.status)}; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                ${entry.entry_id.substring(0, 2)}
+              </div>
+            </div>
+            <div style="flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div>
+                  <h4 style="margin: 0 0 0.25rem 0;">${entry.entry_id}</h4>
+                  <p style="margin: 0; color: var(--muted-foreground); font-size: 0.875rem;">
+                    ${entry.farmer_name} • ${entry.animal_tag} • ${entry.drug_name}
+                  </p>
+                </div>
+                <span class="badge ${statusClass}">${statusText}</span>
+              </div>
+              <div style="display: flex; gap: 1rem; margin-top: 0.5rem; font-size: 0.875rem; color: var(--muted-foreground);">
+                <span>📅 ${date}</span>
+                <span>💊 ${entry.dosage} ${entry.unit}</span>
+                ${entry.vet_name ? `<span>👨‍⚕️ ${entry.vet_name}</span>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      
+      container.innerHTML = html;
+    }
+
+
+    function updateWithSampleData() {
+      loadAnalyticsData();
+    }
+
+    // Helper function to get status color
+    function getStatusColor(status) {
+      switch(status) {
+        case 'approved': return '#22c55e';
+        case 'pending': return '#f59e0b';
+        case 'rejected': return '#ef4444';
+        default: return '#6b7280';
+      }
+    }
+
+    // Global function to refresh analytics (for use from other pages)
+    window.updateAnalytics = loadAnalyticsData;
+
+    // Auto-refresh every 60 seconds
+    let refreshInterval;
+    
+    function startAutoRefresh() {
+      refreshInterval = setInterval(loadAnalyticsData, 4000); // 4 seconds real-time polling
+    }
+    
+    function stopAutoRefresh() {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+      }
+    }
+
+    // Initialize analytics on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      loadAnalyticsData();
+      startAutoRefresh();
+      
+      // Stop auto-refresh when page loses focus
+      document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+          stopAutoRefresh();
+        } else {
+          startAutoRefresh();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

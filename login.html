@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - FarmGuard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="login-page">
+    <div class="login-container">
+      <div class="login-header">
+        <a href="index.html" class="logo">
+          <!--<div class="logo-icon">🌾</div>-->
+          <div class="logo-icon">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L4 5V10C4 15 7.5 19.5 12 22C16.5 19.5 20 15 20 10V5L12 2Z"/>
+            </svg>
+          </div>
+          <span>FarmGuard</span>
+        </a>
+        <h1>Welcome back</h1>
+        <p>Sign in to access your dashboard</p>
+      </div>
+      
+      <div class="login-card">
+        <div class="role-tabs">
+          <button class="role-tab active" data-role="farmer" onclick="switchRole('farmer')">
+            👨‍🌾 Farmer
+          </button>
+          <button class="role-tab" data-role="vet" onclick="switchRole('vet')">
+            👨‍⚕️ Veterinarian
+          </button>
+          <button class="role-tab" data-role="authority" onclick="switchRole('authority')">
+            🏛️ Authority
+          </button>
+        </div>
+        
+        <form class="login-form" id="loginForm">
+          <div class="form-group">
+            <label for="identifier" id="identifierLabel">Farmer ID / Mobile Number</label>
+            <input type="text" id="identifier" placeholder="Enter your ID or mobile number" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter your password" required>
+          </div>
+          
+          <div class="form-row">
+            <label class="checkbox-group">
+              <input type="checkbox" id="remember">
+              <span>Remember me</span>
+            </label>
+            <a href="#" class="forgot-link">Forgot password?</a>
+          </div>
+          
+          <button type="submit" class="btn btn-primary btn-lg">Sign In</button>
+        </form>
+        
+        <div class="login-footer">
+          <p>Don't have an account? <a href="#">Contact your administrator</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const roleConfig = {
+      farmer: {
+        label: 'Farmer ID / Mobile Number',
+        placeholder: 'Enter your ID or mobile number',
+        redirect: 'farmer-dashboard.html'
+      },
+      vet: {
+        label: 'Veterinarian License Number',
+        placeholder: 'Enter your license number',
+        redirect: 'vet-dashboard.html'
+      },
+      authority: {
+        label: 'Authority ID / Email',
+        placeholder: 'Enter your official ID or email',
+        redirect: 'authority-dashboard.html'
+      }
+    };
+
+    let currentRole = 'farmer';
+
+    function switchRole(role) {
+      currentRole = role;
+      
+      // Update tabs
+      document.querySelectorAll('.role-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.role === role);
+      });
+      
+      // Update form
+      const config = roleConfig[role];
+      document.getElementById('identifierLabel').textContent = config.label;
+      document.getElementById('identifier').placeholder = config.placeholder;
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const identifier = document.getElementById('identifier').value;
+      const password = document.getElementById('password').value;
+      
+      try {
+        const response = await fetch('/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            identifier: identifier,
+            password: password,
+            role: currentRole
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          const config = roleConfig[currentRole];
+          window.location.href = config.redirect;
+        } else {
+          alert(data.message || 'Invalid credentials. Please try again.');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        alert('Login failed. Please check your connection and try again.');
+      }
+    });
+  </script>
+</body>
+</html>

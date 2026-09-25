@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Farmer Dashboard - FarmGuard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="index.html" class="logo">
+          <!--<div class="logo-icon">🛡️</div>-->
+          <div class="logo-icon">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L4 5V10C4 15 7.5 19.5 12 22C16.5 19.5 20 15 20 10V5L12 2Z"/>
+            </svg>
+          </div>
+          <span>FarmGuard</span>
+        </a>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Main</div>
+          <a href="farmer-dashboard.html" class="sidebar-link active">
+            <span class="icon">📊</span> Dashboard
+          </a>
+          <a href="#" class="sidebar-link" onclick="openAMUModal(); return false;">
+            <span class="icon">➕</span> New AMU Entry
+          </a>
+          <a href="#" class="sidebar-link">
+            <span class="icon">📋</span> My Entries
+          </a>
+        </div>
+        
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Monitoring</div>
+          <a href="#" class="sidebar-link">
+            <span class="icon">🐄</span> My Livestock
+          </a>
+          <a href="alerts.html" class="sidebar-link">
+            <span class="icon">🔔</span> Alerts
+          </a>
+          <a href="#" class="sidebar-link">
+            <span class="icon">📅</span> Withdrawal Calendar
+          </a>
+        </div>
+        
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Reports</div>
+          <a href="analytics.html" class="sidebar-link">
+            <span class="icon">📈</span> Analytics
+          </a>
+          <a href="audit-log.html" class="sidebar-link">
+            <span class="icon">📜</span> History
+          </a>
+        </div>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">RK</div>
+          <div class="user-details">
+            <div class="user-name">Rajesh Kumar</div>
+            <div class="user-role">Farmer</div>
+          </div>
+        </div>
+        <a href="/logout" class="btn btn-ghost btn-sm" style="width: 100%; margin-top: 0.5rem;">
+          Logout
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="page-header">
+        <h1>Farmer Dashboard</h1>
+        <p>Welcome back, Rajesh! Here's your farm overview.</p>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon primary">📝</div>
+          <div class="stat-info">
+            <h3>Total Entries</h3>
+            <div class="value">24</div>
+            <div class="trend up">↑ 3 this month</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon warning">⏳</div>
+          <div class="stat-info">
+            <h3>Pending Approval</h3>
+            <div class="value">3</div>
+            <div class="trend">Awaiting vet review</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon accent">⚠️</div>
+          <div class="stat-info">
+            <h3>Active Withdrawals</h3>
+            <div class="value">5</div>
+            <div class="trend">2 ending this week</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon success">✓</div>
+          <div class="stat-info">
+            <h3>Compliance Rate</h3>
+            <div class="value">98.5%</div>
+            <div class="trend up">↑ 2.1% from last month</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Entries & Alerts -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <!-- Recent Entries -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Recent AMU Entries</h3>
+              <p class="card-description">Your latest antimicrobial usage records</p>
+            </div>
+          </div>
+          <div class="card-content">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Entry ID</th>
+                    <th>Animal</th>
+                    <th>Drug</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>AMU-2026-007</td>
+                    <td>Cattle #312</td>
+                    <td>Oxytetracycline</td>
+                    <td><span class="badge badge-warning">Pending</span></td>
+                  </tr>
+                  <tr>
+                    <td>AMU-2026-006</td>
+                    <td>Buffalo #23</td>
+                    <td>Amoxicillin</td>
+                    <td><span class="badge badge-success">Approved</span></td>
+                  </tr>
+                  <tr>
+                    <td>AMU-2026-005</td>
+                    <td>Cattle #156</td>
+                    <td>Enrofloxacin</td>
+                    <td><span class="badge badge-success">Approved</span></td>
+                  </tr>
+                  <tr>
+                    <td>AMU-2026-004</td>
+                    <td>Goat #45</td>
+                    <td>Penicillin G</td>
+                    <td><span class="badge badge-danger">Rejected</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card-footer">
+            <a href="#" class="btn btn-ghost btn-sm">View All Entries →</a>
+          </div>
+        </div>
+
+        <!-- Withdrawal Alerts -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Withdrawal Alerts</h3>
+              <p class="card-description">Upcoming and active withdrawal periods</p>
+            </div>
+          </div>
+          <div class="card-content" id="withdrawalAlertsContainer">
+            <p style="text-align: center; padding: 2rem; color: var(--muted-foreground);">Loading withdrawal alerts...</p>
+          </div>
+          <div class="card-footer">
+            <a href="alerts.html" class="btn btn-ghost btn-sm">View All Alerts →</a>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add AMU Entry Modal -->
+  <div id="amuModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 8px; padding: 2rem; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 style="margin: 0;">Add New AMU Entry</h2>
+        <button onclick="closeAMUModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+      </div>
+      
+      <form id="amuForm">
+        <div style="display: grid; gap: 1rem;">
+          <div>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Animal *</label>
+            <select id="animalSelect" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px;">
+              <option value="">Select an animal...</option>
+            </select>
+            <button type="button" onclick="showAddAnimalForm()" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: var(--muted); border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem;">+ Add New Animal</button>
+          </div>
+          
+          <div id="addAnimalForm" style="display: none; padding: 1rem; background: #f5f5f5; border-radius: 4px; margin-bottom: 1rem;">
+            <h3 style="margin-top: 0; margin-bottom: 1rem;">Add New Animal</h3>
+            <div style="display: grid; gap: 0.75rem;">
+              <div>
+                <label style="display: block; margin-bottom: 0.25rem;">Tag Number *</label>
+                <input type="text" id="newAnimalTag" placeholder="e.g., CATTLE-004" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+              </div>
+              <div>
+                <label style="display: block; margin-bottom: 0.25rem;">Species *</label>
+                <select id="newAnimalSpecies" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                  <option value="">Select species...</option>
+                  <option value="cattle">Cattle</option>
+                  <option value="buffalo">Buffalo</option>
+                  <option value="goat">Goat</option>
+                  <option value="poultry">Poultry</option>
+                </select>
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button type="button" onclick="addAnimal()" class="btn btn-primary btn-sm">Add Animal</button>
+                <button type="button" onclick="hideAddAnimalForm()" class="btn btn-outline btn-sm">Cancel</button>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Drug / Veterinary Product * (CDSCO Official A–Z List)</label>
+            <select id="drugSelect" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-weight: 500;">
+              <option value="">Select an official CDSCO drug...</option>
+            </select>
+            <div id="cdscoRefBox" style="display: none; margin-top: 0.5rem; padding: 0.75rem; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 4px; font-size: 0.825rem; color: #0369a1;">
+              <div><strong>Active Ingredient:</strong> <span id="cdscoActive"></span></div>
+              <div><strong>CDSCO Approval Source:</strong> <span id="cdscoSource"></span> (<span id="cdscoDate"></span>)</div>
+              <div><strong>Approved Species:</strong> <span id="cdscoSpecies"></span></div>
+              <div><strong>Residue MRL Info:</strong> <span id="cdscoMrl"></span></div>
+            </div>
+            <small id="drugInfo" style="display: block; margin-top: 0.25rem; color: #666;"></small>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Route of Administration *</label>
+              <select id="routeSelect" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="Intramuscular">Intramuscular (IM)</option>
+                <option value="Subcutaneous">Subcutaneous (SC)</option>
+                <option value="Intravenous">Intravenous (IV)</option>
+                <option value="Oral">Oral / Drench</option>
+                <option value="Intramammary">Intramammary</option>
+                <option value="Injectable">Injectable</option>
+              </select>
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Indication / Medical Purpose *</label>
+              <input type="text" id="indicationInput" placeholder="e.g., Pneumonia, Foot rot, Mastitis" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+            <div>
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Dosage *</label>
+              <input type="number" id="dosage" step="0.01" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Unit *</label>
+              <input type="text" id="unit" readonly style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; background: #f5f5f5;">
+            </div>
+          </div>
+          
+          <div>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Treatment Date *</label>
+            <input type="date" id="treatmentDate" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px;">
+          </div>
+          
+          <div>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Expected Selling Date</label>
+            <input type="date" id="expectedSellingDate" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px;">
+          </div>
+          
+          <div id="withdrawalInfo" style="padding: 1rem; background: #e3f2fd; border-radius: 4px; display: none;">
+            <strong>Withdrawal Period:</strong> <span id="withdrawalDays"></span> days<br>
+            <strong>Withdrawal End Date:</strong> <span id="withdrawalEndDate"></span>
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+          <button type="submit" class="btn btn-primary" style="flex: 1;" id="submitAMUButton" onclick="handleSubmitAMUEntry(event); return false;">Submit Entry</button>
+          <button type="button" onclick="closeAMUModal()" class="btn btn-outline">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script>
+  // Store the submit button reference
+  let submitButton = null;
+
+  function escapeHtml(text) {
+    if (text == null || text === '') return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function parseLocalDate(iso) {
+    if (!iso) return null;
+    const part = String(iso).split('T')[0];
+    const parts = part.split('-').map(Number);
+    if (parts.length < 3 || !parts[0]) return null;
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+  }
+
+  function updateWithdrawalAlerts(data) {
+    const alertsContainer = document.getElementById('withdrawalAlertsContainer');
+    if (!alertsContainer) return;
+
+    let activeEntries;
+    if (Array.isArray(data.withdrawal_alerts)) {
+      activeEntries = data.withdrawal_alerts.filter(e => e && e.withdrawal_end_date);
+    } else {
+      activeEntries = (data.entries || []).filter(e => {
+        if (e.status !== 'approved' || !e.withdrawal_end_date) return false;
+        const endDate = parseLocalDate(e.withdrawal_end_date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return endDate && endDate >= today;
+      });
+      activeEntries.sort((a, b) =>
+        parseLocalDate(a.withdrawal_end_date) - parseLocalDate(b.withdrawal_end_date));
+    }
+
+    if (activeEntries.length > 0) {
+      alertsContainer.innerHTML = '';
+      activeEntries.slice(0, 5).forEach(entry => {
+        const endDate = parseLocalDate(entry.withdrawal_end_date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const daysRemaining = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+
+        let priority = 'info';
+        let icon = 'ℹ️';
+        let titleSuffix = 'Active Withdrawal';
+
+        if (daysRemaining <= 0) {
+          priority = 'urgent';
+          icon = '🚨';
+          titleSuffix = 'Withdrawal Ended - Action Required!';
+        } else if (daysRemaining <= 2) {
+          priority = 'urgent';
+          icon = '⚠️';
+          titleSuffix = 'Withdrawal Ending Soon!';
+        } else if (daysRemaining <= 5) {
+          priority = 'warning';
+          icon = '🕐';
+          titleSuffix = 'Active Withdrawal';
+        }
+
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert-item';
+        const animal = escapeHtml(entry.animal_tag || '');
+        const drug = escapeHtml(entry.drug_name || '');
+        const eid = entry.entry_id ? escapeHtml(String(entry.entry_id)) : '';
+        alertDiv.innerHTML = `
+            <div class="alert-icon ${priority}">${icon}</div>
+            <div class="alert-content">
+              <h4>${animal} - ${titleSuffix}</h4>
+              <p>${drug} treatment - ${daysRemaining <= 0 ? 'Ended' : daysRemaining + ' day' + (daysRemaining !== 1 ? 's' : '') + ' remaining'}</p>
+              <div class="alert-meta">
+                <span>📅 Ends: ${endDate.toLocaleDateString()}</span>
+                ${eid ? `<span>•</span><span>Entry: ${eid}</span>` : ''}
+              </div>
+            </div>
+          `;
+        alertsContainer.appendChild(alertDiv);
+      });
+    } else {
+      alertsContainer.innerHTML = '<p style="text-align: center; padding: 2rem; color: var(--muted-foreground);">No active withdrawal periods. All clear! ✅</p>';
+    }
+  }
+
+  // Fetch dashboard data on page load
+  async function loadDashboardData() {
+    try {
+      const response = await fetch('/api/farmer/dashboard', {
+        credentials: 'include'
+      });
+      
+      if (response.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
+      
+      const data = await response.json();
+      
+      // Update user info
+      if (data.user) {
+        document.querySelector('.user-name').textContent = data.user.name;
+        const userInitials = data.user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+        document.querySelector('.user-avatar').textContent = userInitials;
+      }
+      
+      // Update page header
+      if (data.user) {
+        document.querySelector('.page-header p').textContent = `Welcome back, ${data.user.name.split(' ')[0]}! Here's your farm overview.`;
+      }
+      
+      // Update stats
+      if (data.stats) {
+        document.querySelectorAll('.stat-card')[0].querySelector('.value').textContent = data.stats.total_entries || 0;
+        document.querySelectorAll('.stat-card')[1].querySelector('.value').textContent = data.stats.pending || 0;
+        document.querySelectorAll('.stat-card')[2].querySelector('.value').textContent = data.stats.active_withdrawals || 0;
+        document.querySelectorAll('.stat-card')[3].querySelector('.value').textContent = (data.stats.compliance_rate || 0) + '%';
+      }
+      
+      // Update entries table
+      const tbody = document.querySelector('table tbody');
+      if (data.entries && data.entries.length > 0) {
+        tbody.innerHTML = '';
+        
+        data.entries.forEach(entry => {
+          const row = document.createElement('tr');
+          const statusClass = entry.status === 'approved' ? 'badge-success' : 
+                             entry.status === 'pending' ? 'badge-warning' : 'badge-danger';
+          const statusText = entry.status.charAt(0).toUpperCase() + entry.status.slice(1);
+          const vetMsg = entry.vet_notes && String(entry.vet_notes).trim();
+          const vetNotesHtml = vetMsg
+            ? `<div style="font-size: 0.75rem; color: var(--muted-foreground); margin-top: 0.35rem; max-width: 18rem; white-space: pre-wrap;">${escapeHtml(vetMsg)}</div>`
+            : '';
+          
+          row.innerHTML = `
+            <td>${entry.entry_id}</td>
+            <td>${entry.animal_tag}</td>
+            <td>${entry.drug_name}</td>
+            <td><span class="badge ${statusClass}">${statusText}</span>${vetNotesHtml}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      } else {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 2rem; color: var(--muted-foreground);">No entries found. Create your first AMU entry to get started.</td></tr>';
+      }
+
+      updateWithdrawalAlerts(data);
+    } catch (error) {
+      console.error('Error loading dashboard:', error);
+      const wa = document.getElementById('withdrawalAlertsContainer');
+      if (wa) {
+        wa.innerHTML = '<p style="text-align: center; padding: 2rem; color: var(--muted-foreground);">Unable to load withdrawal alerts. Please refresh the page.</p>';
+      }
+    }
+  }
+  
+  // Load data when page loads
+  document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData();
+    // Real-time automatic polling every 4 seconds
+    setInterval(loadDashboardData, 4000);
+
+    
+    // Setup form submission AFTER DOM is loaded
+    const amuForm = document.getElementById('amuForm');
+    if (amuForm) {
+      // Remove any existing listeners first
+      const newForm = amuForm.cloneNode(true);
+      amuForm.parentNode.replaceChild(newForm, amuForm);
+      
+      // Add fresh event listener
+      document.getElementById('amuForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleSubmitAMUEntry(e);
+        return false;
+      });
+      console.log('Form submit event listener added!');
+    }
+    
+    // Also add direct button click handler as backup
+    const submitBtn = document.getElementById('submitAMUButton');
+    if (submitBtn) {
+      submitBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const form = document.getElementById('amuForm');
+        if (form) {
+          const event = new Event('submit', { bubbles: true, cancelable: true });
+          form.dispatchEvent(event);
+        }
+      });
+    }
+  });
+  
+  // AMU Entry Modal Functions
+  function openAMUModal() {
+    console.log('Opening AMU modal');
+    document.getElementById('amuModal').style.display = 'flex';
+    loadAnimals();
+    loadDrugs();
+    // Set today's date as default
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('treatmentDate').value = today;
+    updateWithdrawalInfo();
+  }
+  
+  function closeAMUModal() {
+    document.getElementById('amuModal').style.display = 'none';
+    document.getElementById('amuForm').reset();
+    document.getElementById('addAnimalForm').style.display = 'none';
+    document.getElementById('withdrawalInfo').style.display = 'none';
+    // Reset submit button if it exists
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = 'Submit Entry';
+    }
+  }
+  
+  async function loadAnimals() {
+    try {
+      const response = await fetch('/api/animals', {
+        credentials: 'include'
+      });
+      
+      if (response.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
+      
+      const animals = await response.json();
+      
+      const select = document.getElementById('animalSelect');
+      select.innerHTML = '<option value="">Select an animal...</option>';
+      
+      animals.forEach(animal => {
+        const option = document.createElement('option');
+        option.value = animal.id;
+        option.textContent = `${animal.tag_number} (${animal.species})`;
+        select.appendChild(option);
+      });
+    } catch (error) {
+      console.error('Error loading animals:', error);
+      alert('Failed to load animals. Please refresh the page.');
+    }
+  }
+  
+  async function loadDrugs() {
+    try {
+      const response = await fetch('/api/drugs', {
+        credentials: 'include'
+      });
+      
+      if (response.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
+      
+      const drugs = await response.json();
+      
+      const select = document.getElementById('drugSelect');
+      select.innerHTML = '<option value="">Select an official CDSCO drug...</option>';
+      
+      drugs.forEach(drug => {
+        const option = document.createElement('option');
+        option.value = drug.id;
+        option.textContent = `${drug.name} (${drug.active_ingredient}) — ${drug.withdrawal_period_days} days withdrawal`;
+        option.dataset.withdrawalDays = drug.withdrawal_period_days;
+        option.dataset.unit = drug.unit;
+        option.dataset.maxDosage = drug.max_dosage;
+        option.dataset.activeIngredient = drug.active_ingredient;
+        option.dataset.species = drug.species;
+        option.dataset.route = drug.route;
+        option.dataset.indication = drug.indication;
+        option.dataset.source = drug.source;
+        option.dataset.sourceDate = drug.source_date;
+        option.dataset.mrlInfo = drug.mrl_info;
+        select.appendChild(option);
+      });
+      
+      // Update unit and withdrawal info when drug is selected
+      select.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const refBox = document.getElementById('cdscoRefBox');
+        if (selectedOption.value) {
+          document.getElementById('unit').value = selectedOption.dataset.unit || '';
+          
+          if (refBox) {
+            document.getElementById('cdscoActive').textContent = selectedOption.dataset.activeIngredient || selectedOption.textContent;
+            document.getElementById('cdscoSource').textContent = selectedOption.dataset.source || 'CDSCO Approved';
+            document.getElementById('cdscoDate').textContent = selectedOption.dataset.sourceDate || 'Current';
+            document.getElementById('cdscoSpecies').textContent = selectedOption.dataset.species || 'Cattle, Buffalo, Goat';
+            document.getElementById('cdscoMrl').textContent = selectedOption.dataset.mrlInfo || 'Codex/FSSAI MRL Compliant';
+            refBox.style.display = 'block';
+          }
+
+          const defaultInd = (selectedOption.dataset.indication || '').split(',')[0].trim();
+          if (defaultInd && document.getElementById('indicationInput')) {
+            document.getElementById('indicationInput').value = defaultInd;
+          }
+
+          const maxDosage = selectedOption.dataset.maxDosage;
+          document.getElementById('drugInfo').textContent = 
+            maxDosage ? `Max CDSCO dosage: ${maxDosage} ${selectedOption.dataset.unit}` : '';
+          
+          updateWithdrawalInfo();
+        } else if (refBox) {
+          refBox.style.display = 'none';
+        }
+      });
+    } catch (error) {
+      console.error('Error loading drugs:', error);
+      alert('Failed to load drugs. Please refresh the page.');
+    }
+  }
+  
+  function updateWithdrawalInfo() {
+    const treatmentDate = document.getElementById('treatmentDate').value;
+    const drugSelect = document.getElementById('drugSelect');
+    const selectedDrug = drugSelect.options[drugSelect.selectedIndex];
+    
+    if (treatmentDate && selectedDrug.value) {
+      const withdrawalDays = parseInt(selectedDrug.dataset.withdrawalDays);
+      const treatment = new Date(treatmentDate);
+      const withdrawalEnd = new Date(treatment);
+      withdrawalEnd.setDate(withdrawalEnd.getDate() + withdrawalDays);
+      
+      document.getElementById('withdrawalDays').textContent = withdrawalDays;
+      document.getElementById('withdrawalEndDate').textContent = withdrawalEnd.toLocaleDateString();
+      document.getElementById('withdrawalInfo').style.display = 'block';
+    } else {
+      document.getElementById('withdrawalInfo').style.display = 'none';
+    }
+  }
+  
+  // Add event listeners for date changes
+  document.addEventListener('DOMContentLoaded', function() {
+    const treatmentDateInput = document.getElementById('treatmentDate');
+    if (treatmentDateInput) {
+      treatmentDateInput.addEventListener('change', updateWithdrawalInfo);
+    }
+  });
+  
+  async function addAnimal() {
+    const tagNumber = document.getElementById('newAnimalTag').value;
+    const species = document.getElementById('newAnimalSpecies').value;
+    
+    if (!tagNumber || !species) {
+      alert('Please fill in all fields');
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/animals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          tag_number: tagNumber,
+          species: species
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        alert('Animal added successfully!');
+        hideAddAnimalForm();
+        loadAnimals();
+        // Select the newly added animal
+        document.getElementById('animalSelect').value = result.animal.id;
+      } else {
+        alert('Error: ' + (result.error || 'Failed to add animal'));
+      }
+    } catch (error) {
+      console.error('Error adding animal:', error);
+      alert('Failed to add animal. Please try again.');
+    }
+  }
+  
+  function showAddAnimalForm() {
+    document.getElementById('addAnimalForm').style.display = 'block';
+  }
+  
+  function hideAddAnimalForm() {
+    document.getElementById('addAnimalForm').style.display = 'none';
+    document.getElementById('newAnimalTag').value = '';
+    document.getElementById('newAnimalSpecies').value = '';
+  }
+  
+  // MAIN SUBMIT FUNCTION - FIXED AND WORKING
+  async function handleSubmitAMUEntry(event) {
+    // Prevent default form submission
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+    }
+    
+    console.log('=== SUBMIT BUTTON CLICKED ===');
+    
+    // Get form values
+    const animalId = document.getElementById('animalSelect')?.value;
+    const drugId = document.getElementById('drugSelect')?.value;
+    const dosage = document.getElementById('dosage')?.value;
+    const unit = document.getElementById('unit')?.value;
+    const route = document.getElementById('routeSelect')?.value || 'Injectable';
+    const indication = document.getElementById('indicationInput')?.value || 'General Antibacterial';
+    const treatmentDate = document.getElementById('treatmentDate')?.value;
+    const expectedSellingDate = document.getElementById('expectedSellingDate')?.value;
+    
+    console.log('Form values:', { animalId, drugId, dosage, unit, route, indication, treatmentDate, expectedSellingDate });
+    
+    // Basic validation
+    if (!animalId || !drugId || !dosage || !unit || !treatmentDate) {
+      alert('Please fill in all required fields');
+      return false;
+    }
+    
+    if (parseFloat(dosage) <= 0 || isNaN(parseFloat(dosage))) {
+      alert('Please enter a valid dosage greater than 0');
+      return false;
+    }
+    
+    // Get submit button
+    let submitButton = document.getElementById('submitAMUButton');
+    if (!submitButton) {
+      submitButton = document.querySelector('#amuForm button[type="submit"]');
+    }
+    
+    // Disable button to prevent double click
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = 'Submitting...';
+    }
+    
+    try {
+      console.log('Sending POST request to /api/amu-entries');
+      
+      // Send data to server
+      const response = await fetch('/api/amu-entries', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          animal_id: parseInt(animalId),
+          drug_id: parseInt(drugId),
+          dosage: parseFloat(dosage),
+          unit: unit,
+          route: route,
+          indication: indication,
+          treatment_date: treatmentDate,
+          expected_selling_date: expectedSellingDate || null
+        })
+      });
+      
+      console.log('Response status:', response.status);
+      
+      if (response.status === 401) {
+        alert('Session expired. Please login again.');
+        window.location.href = '/login';
+        return false;
+      }
+      
+      const result = await response.json();
+      console.log('Server response:', result);
+      
+      if (response.ok && result.success) {
+        alert(`Success! AMU Entry ${result.entry_id} has been created and is pending vet review.`);
+        closeAMUModal();
+        // Refresh the dashboard after a short delay
+        setTimeout(() => {
+          loadDashboardData();
+        }, 500);
+      } else {
+        alert('Error: ' + (result.error || result.message || 'Failed to create entry'));
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = 'Submit Entry';
+        }
+      }
+      
+    } catch (error) {
+      console.error('Network error:', error);
+      alert('Network error: ' + error.message + '. Please check your connection and try again.');
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Submit Entry';
+      }
+    }
+    
+    return false;
+  }
+  
+  // Add a direct test function that you can call from browser console
+  window.testSubmit = function() {
+    console.log('Testing submit function...');
+    const testEvent = {
+      preventDefault: () => console.log('preventDefault called'),
+      submitter: document.querySelector('#amuForm button[type="submit"]')
+    };
+    handleSubmitAMUEntry(testEvent);
+  };
+  
+  // Log when script loads
+  console.log('Farmer dashboard JavaScript loaded successfully!');
+</script>
+  <!--<script>
+    // Fetch dashboard data on page load
+    async function loadDashboardData() {
+      try {
+        const response = await fetch('/api/farmer/dashboard', {
+          credentials: 'include'
+        });
+        
+        if (response.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+        
+        const data = await response.json();
+        
+        // Update user info
+        if (data.user) {
+          document.querySelector('.user-name').textContent = data.user.name;
+          const userInitials = data.user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+          document.querySelector('.user-avatar').textContent = userInitials;
+        }
+        
+        // Update page header
+        if (data.user) {
+          document.querySelector('.page-header p').textContent = `Welcome back, ${data.user.name.split(' ')[0]}! Here's your farm overview.`;
+        }
+        
+        // Update stats
+        if (data.stats) {
+          document.querySelectorAll('.stat-card')[0].querySelector('.value').textContent = data.stats.total_entries || 0;
+          document.querySelectorAll('.stat-card')[1].querySelector('.value').textContent = data.stats.pending || 0;
+          document.querySelectorAll('.stat-card')[2].querySelector('.value').textContent = data.stats.active_withdrawals || 0;
+          document.querySelectorAll('.stat-card')[3].querySelector('.value').textContent = (data.stats.compliance_rate || 0) + '%';
+        }
+        
+        // Update entries table
+        const tbody = document.querySelector('table tbody');
+        if (data.entries && data.entries.length > 0) {
+          tbody.innerHTML = '';
+          
+          data.entries.forEach(entry => {
+            const row = document.createElement('tr');
+            const statusClass = entry.status === 'approved' ? 'badge-success' : 
+                               entry.status === 'pending' ? 'badge-warning' : 'badge-danger';
+            const statusText = entry.status.charAt(0).toUpperCase() + entry.status.slice(1);
+            
+            row.innerHTML = `
+              <td>${entry.entry_id}</td>
+              <td>${entry.animal_tag}</td>
+              <td>${entry.drug_name}</td>
+              <td><span class="badge ${statusClass}">${statusText}</span></td>
+            `;
+            tbody.appendChild(row);
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 2rem; color: var(--muted-foreground);">No entries found. Create your first AMU entry to get started.</td></tr>';
+        }
+        
+        // Update withdrawal alerts with real data
+        updateWithdrawalAlerts(data.entries || []);
+      } catch (error) {
+        console.error('Error loading dashboard:', error);
+      }
+    }
+    
+    // Function to update withdrawal alerts with real data from AMU entries
+    function updateWithdrawalAlerts(entries) {
+      const alertsContainer = document.getElementById('withdrawalAlertsContainer');
+      if (!alertsContainer) return;
+      
+      // Get all approved entries with active withdrawal periods
+      const activeEntries = entries.filter(e => {
+        if (e.status !== 'approved' || !e.withdrawal_end_date) return false;
+        const endDate = new Date(e.withdrawal_end_date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return endDate >= today;
+      });
+      
+      // Sort by withdrawal end date (soonest first)
+      activeEntries.sort((a, b) => {
+        return new Date(a.withdrawal_end_date) - new Date(b.withdrawal_end_date);
+      });
+      
+      if (activeEntries.length > 0) {
+        alertsContainer.innerHTML = '';
+        // Show up to 5 most urgent alerts
+        activeEntries.slice(0, 5).forEach(entry => {
+          const endDate = new Date(entry.withdrawal_end_date);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const daysRemaining = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+          
+          let priority = 'info';
+          let icon = 'ℹ️';
+          let titleSuffix = 'Active Withdrawal';
+          
+          if (daysRemaining <= 0) {
+            priority = 'urgent';
+            icon = '🚨';
+            titleSuffix = 'Withdrawal Ended - Action Required!';
+          } else if (daysRemaining <= 2) {
+            priority = 'urgent';
+            icon = '⚠️';
+            titleSuffix = 'Withdrawal Ending Soon!';
+          } else if (daysRemaining <= 5) {
+            priority = 'warning';
+            icon = '🕐';
+            titleSuffix = 'Active Withdrawal';
+          }
+          
+          const alertDiv = document.createElement('div');
+          alertDiv.className = 'alert-item';
+          alertDiv.innerHTML = `
+            <div class="alert-icon ${priority}">${icon}</div>
+            <div class="alert-content">
+              <h4>${entry.animal_tag} - ${titleSuffix}</h4>
+              <p>${entry.drug_name} treatment - ${daysRemaining <= 0 ? 'Ended' : daysRemaining + ' day' + (daysRemaining !== 1 ? 's' : '') + ' remaining'}</p>
+              <div class="alert-meta">
+                <span>📅 Ends: ${endDate.toLocaleDateString()}</span>
+                ${entry.entry_id ? `<span>•</span><span>Entry: ${entry.entry_id}</span>` : ''}
+              </div>
+            </div>
+          `;
+          alertsContainer.appendChild(alertDiv);
+        });
+      } else {
+        alertsContainer.innerHTML = '<p style="text-align: center; padding: 2rem; color: var(--muted-foreground);">No active withdrawal periods. All clear! ✅</p>';
+      }
+    }
+    
+    // Load data when page loads
+    loadDashboardData();
+    
+    // AMU Entry Modal Functions
+    function openAMUModal() {
+      document.getElementById('amuModal').style.display = 'flex';
+      loadAnimals();
+      loadDrugs();
+      // Set today's date as default
+      document.getElementById('treatmentDate').valueAsDate = new Date();
+    }
+    
+    function closeAMUModal() {
+      document.getElementById('amuModal').style.display = 'none';
+      document.getElementById('amuForm').reset();
+      document.getElementById('addAnimalForm').style.display = 'none';
+      document.getElementById('withdrawalInfo').style.display = 'none';
+    }
+    
+    async function loadAnimals() {
+      try {
+        const response = await fetch('/api/animals', {
+          credentials: 'include'
+        });
+        const animals = await response.json();
+        
+        const select = document.getElementById('animalSelect');
+        select.innerHTML = '<option value="">Select an animal...</option>';
+        
+        animals.forEach(animal => {
+          const option = document.createElement('option');
+          option.value = animal.id;
+          option.textContent = `${animal.tag_number} (${animal.species})`;
+          select.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error loading animals:', error);
+        alert('Failed to load animals. Please refresh the page.');
+      }
+    }
+    
+    async function loadDrugs() {
+      try {
+        const response = await fetch('/api/drugs', {
+          credentials: 'include'
+        });
+        const drugs = await response.json();
+        
+        const select = document.getElementById('drugSelect');
+        select.innerHTML = '<option value="">Select a drug...</option>';
+        
+        drugs.forEach(drug => {
+          const option = document.createElement('option');
+          option.value = drug.id;
+          option.textContent = `${drug.name} (${drug.withdrawal_period_days} days withdrawal)`;
+          option.dataset.withdrawalDays = drug.withdrawal_period_days;
+          option.dataset.unit = drug.unit;
+          option.dataset.maxDosage = drug.max_dosage;
+          select.appendChild(option);
+        });
+        
+        // Update unit and withdrawal info when drug is selected
+        select.addEventListener('change', function() {
+          const selectedOption = this.options[this.selectedIndex];
+          if (selectedOption.value) {
+            document.getElementById('unit').value = selectedOption.dataset.unit || '';
+            const withdrawalDays = selectedOption.dataset.withdrawalDays;
+            const maxDosage = selectedOption.dataset.maxDosage;
+            
+            document.getElementById('drugInfo').textContent = 
+              maxDosage ? `Max dosage: ${maxDosage} ${selectedOption.dataset.unit}` : '';
+            
+            updateWithdrawalInfo();
+          }
+        });
+      } catch (error) {
+        console.error('Error loading drugs:', error);
+        alert('Failed to load drugs. Please refresh the page.');
+      }
+    }
+    
+    function updateWithdrawalInfo() {
+      const treatmentDate = document.getElementById('treatmentDate').value;
+      const drugSelect = document.getElementById('drugSelect');
+      const selectedDrug = drugSelect.options[drugSelect.selectedIndex];
+      
+      if (treatmentDate && selectedDrug.value) {
+        const withdrawalDays = parseInt(selectedDrug.dataset.withdrawalDays);
+        const treatment = new Date(treatmentDate);
+        const withdrawalEnd = new Date(treatment);
+        withdrawalEnd.setDate(withdrawalEnd.getDate() + withdrawalDays);
+        
+        document.getElementById('withdrawalDays').textContent = withdrawalDays;
+        document.getElementById('withdrawalEndDate').textContent = withdrawalEnd.toLocaleDateString();
+        document.getElementById('withdrawalInfo').style.display = 'block';
+      }
+    }
+    
+    document.getElementById('treatmentDate').addEventListener('change', updateWithdrawalInfo);
+    
+    async function addAnimal() {
+      const tagNumber = document.getElementById('newAnimalTag').value;
+      const species = document.getElementById('newAnimalSpecies').value;
+      
+      if (!tagNumber || !species) {
+        alert('Please fill in all fields');
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/animals', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            tag_number: tagNumber,
+            species: species
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('Animal added successfully!');
+          hideAddAnimalForm();
+          loadAnimals();
+          // Select the newly added animal
+          document.getElementById('animalSelect').value = result.animal.id;
+        } else {
+          alert('Error: ' + (result.error || 'Failed to add animal'));
+        }
+      } catch (error) {
+        console.error('Error adding animal:', error);
+        alert('Failed to add animal. Please try again.');
+      }
+    }
+    
+    function showAddAnimalForm() {
+      document.getElementById('addAnimalForm').style.display = 'block';
+    }
+    
+    function hideAddAnimalForm() {
+      document.getElementById('addAnimalForm').style.display = 'none';
+      document.getElementById('newAnimalTag').value = '';
+      document.getElementById('newAnimalSpecies').value = '';
+    }
+    
+    async function submitAMUEntry(event) {
+      event.preventDefault();
+      
+      const animalId = document.getElementById('animalSelect').value;
+      const drugId = document.getElementById('drugSelect').value;
+      const dosage = parseFloat(document.getElementById('dosage').value);
+      const unit = document.getElementById('unit').value;
+      const treatmentDate = document.getElementById('treatmentDate').value;
+      
+      if (!animalId || !drugId || !dosage || !unit || !treatmentDate) {
+        alert('Please fill in all required fields');
+        return;
+      }
+      
+      // Get the submit button
+      const submitBtn = event.submitter || event.target.querySelector('button[type="submit"]');
+      
+      // Disable submit button to prevent double submission
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+      
+      try {
+        const response = await fetch('/api/amu-entries', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            animal_id: parseInt(animalId),
+            drug_id: parseInt(drugId),
+            dosage: dosage,
+            unit: unit,
+            treatment_date: treatmentDate
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+          alert(`AMU Entry ${result.entry_id} created successfully!`);
+          closeAMUModal();
+          loadDashboardData(); // Refresh dashboard
+          
+          // Refresh analytics and authority dashboard data if they're open
+          if (typeof window.updateAnalytics === 'function') {
+            window.updateAnalytics();
+          }
+          if (typeof window.updateAuthorityDashboard === 'function') {
+            window.updateAuthorityDashboard();
+          }
+        } else {
+          alert('Error: ' + (result.error || result.message || 'Failed to create entry'));
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit Entry';
+        }
+      } catch (error) {
+        console.error('Error submitting AMU entry:', error);
+        alert('Failed to submit entry: ' + error.message + '. Please check your connection and try again.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Entry';
+      }
+    }
+
+    // Add event listener for form submission
+    document.addEventListener('DOMContentLoaded', function() {
+      const amuForm = document.getElementById('amuForm');
+      if (amuForm) {
+        amuForm.addEventListener('submit', submitAMUEntry);
+      }
+    });
+  </script>-->
+</body>
+</html>

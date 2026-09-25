@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audit Log - FarmGuard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-container">
+      <a href="index.html" class="logo">
+        <!--<div class="logo-icon">🌾</div>-->
+        <div class="logo-icon">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L4 5V10C4 15 7.5 19.5 12 22C16.5 19.5 20 15 20 10V5L12 2Z"/>
+          </svg>
+        </div>
+        <span>FarmGuard</span>
+      </a>
+      
+      <nav class="nav">
+        <div class="nav-links">
+          <a href="index.html" class="nav-link">Home</a>
+          <a href="analytics.html" class="nav-link">Analytics</a>
+          <a href="audit-log.html" class="nav-link active">Audit Log</a>
+          <a href="alerts.html" class="nav-link">Alerts</a>
+        </div>
+        <a href="login.html" class="btn btn-primary">Login</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="section-container">
+      <div class="page-header" style="margin-bottom: 2rem;">
+        <h1>Audit Log</h1>
+        <p style="color: var(--muted-foreground);">Time-stamped tracking of all entries, approvals, and system activities</p>
+      </div>
+
+      <!-- Filters -->
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-content" style="padding: 1rem;">
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+              <input type="text" placeholder="🔍 Search logs by ID, user, or action..." style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.875rem;">
+            </div>
+            <button class="btn btn-outline">🎛️ Filter</button>
+            <button class="btn btn-outline">📥 Export</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Log Entries -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">Recent Activity</h3>
+            <p class="card-description">Showing latest 50 audit log entries</p>
+          </div>
+        </div>
+        <div class="card-content">
+          <!-- Log Entry 1 -->
+          <div class="alert-item">
+            <div class="alert-icon info">➕</div>
+            <div class="alert-content" style="flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 0.5rem;">
+                <div>
+                  <h4>AMU Entry Created</h4>
+                  <p>Rajesh Kumar (Farmer)</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span class="badge badge-info">Create</span>
+                  <span style="font-size: 0.75rem; color: var(--muted-foreground);">🕐 2026-01-13 14:32:45</span>
+                </div>
+              </div>
+              <p style="margin-top: 0.5rem;">Created new AMU entry AMU-2026-007 for Cattle #312</p>
+              <p style="font-size: 0.75rem; color: var(--muted-foreground); margin-top: 0.25rem;">Log ID: LOG-2026-0156</p>
+            </div>
+          </div>
+
+          <!-- Log Entry 2 -->
+          <div class="alert-item">
+            <div class="alert-icon success">✓</div>
+            <div class="alert-content" style="flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 0.5rem;">
+                <div>
+                  <h4>Entry Approved</h4>
+                  <p>Dr. Priya Sharma (Vet)</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span class="badge badge-success">Approve</span>
+                  <span style="font-size: 0.75rem; color: var(--muted-foreground);">🕐 2026-01-13 13:15:22</span>
+                </div>
+              </div>
+              <p style="margin-top: 0.5rem;">Approved AMU-2026-005 - Dosage validated</p>
+              <p style="font-size: 0.75rem; color: var(--muted-foreground); margin-top: 0.25rem;">Log ID: LOG-2026-0155</p>
+            </div>
+          </div>
+
+          <!-- Log Entry 3 -->
+          <div class="alert-item">
+            <div class="alert-icon urgent">✗</div>
+            <div class="alert-content" style="flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 0.5rem;">
+                <div>
+                  <h4>Entry Rejected</h4>
+                  <p>Dr. Anand Patel (Vet)</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span class="badge badge-danger">Reject</span>
+                  <span style="font-size: 0.75rem; color: var(--muted-foreground);">🕐 2026-01-13 11:45:10</span>
+                </div>
+              </div>
+              <p style="margin-top: 0.5rem;">Rejected AMU-2026-004 - Dosage exceeds recommended limit</p>
+              <p style="font-size: 0.75rem; color: var(--muted-foreground); margin-top: 0.25rem;">Log ID: LOG-2026-0154</p>
+            </div>
+          </div>
+
+          <!-- Log Entry 4 -->
+          <div class="alert-item">
+            <div class="alert-icon warning">✏️</div>
+            <div class="alert-content" style="flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 0.5rem;">
+                <div>
+                  <h4>Entry Modified</h4>
+                  <p>Suresh Patel (Farmer)</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span class="badge badge-warning">Edit</span>
+                  <span style="font-size: 0.75rem; color: var(--muted-foreground);">🕐 2026-01-13 10:20:33</span>
+                </div>
+              </div>
+              <p style="margin-top: 0.5rem;">Updated dosage for AMU-2026-003 from 8mg/kg to 10mg/kg</p>
+              <p style="font-size: 0.75rem; color: var(--muted-foreground); margin-top: 0.25rem;">Log ID: LOG-2026-0153</p>
+            </div>
+          </div>
+
+          <!-- Log Entry 5 -->
+          <div class="alert-item">
+            <div class="alert-icon info">👁️</div>
+            <div class="alert-content" style="flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 0.5rem;">
+                <div>
+                  <h4>Report Viewed</h4>
+                  <p>Authority Admin</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span class="badge badge-outline">View</span>
+                  <span style="font-size: 0.75rem; color: var(--muted-foreground);">🕐 2026-01-13 09:05:18</span>
+                </div>
+              </div>
+              <p style="margin-top: 0.5rem;">Accessed compliance report for North Zone - December 2025</p>
+              <p style="font-size: 0.75rem; color: var(--muted-foreground); margin-top: 0.25rem;">Log ID: LOG-2026-0152</p>
+            </div>
+          </div>
+
+          <!-- Log Entry 6 -->
+          <div class="alert-item">
+            <div class="alert-icon info">➕</div>
+            <div class="alert-content" style="flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 0.5rem;">
+                <div>
+                  <h4>AMU Entry Created</h4>
+                  <p>Meena Devi (Farmer)</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span class="badge badge-info">Create</span>
+                  <span style="font-size: 0.75rem; color: var(--muted-foreground);">🕐 2026-01-12 16:45:55</span>
+                </div>
+              </div>
+              <p style="margin-top: 0.5rem;">Created new AMU entry AMU-2026-006 for Buffalo #23</p>
+              <p style="font-size: 0.75rem; color: var(--muted-foreground); margin-top: 0.25rem;">Log ID: LOG-2026-0151</p>
+            </div>
+          </div>
+
+          <!-- Log Entry 7 -->
+          <div class="alert-item">
+            <div class="alert-icon success">✓</div>
+            <div class="alert-content" style="flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 0.5rem;">
+                <div>
+                  <h4>Entry Approved</h4>
+                  <p>Dr. Priya Sharma (Vet)</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span class="badge badge-success">Approve</span>
+                  <span style="font-size: 0.75rem; color: var(--muted-foreground);">🕐 2026-01-12 15:30:22</span>
+                </div>
+              </div>
+              <p style="margin-top: 0.5rem;">Approved AMU-2026-003 - Prescription verified</p>
+              <p style="font-size: 0.75rem; color: var(--muted-foreground); margin-top: 0.25rem;">Log ID: LOG-2026-0150</p>
+            </div>
+          </div>
+
+          <!-- Log Entry 8 -->
+          <div class="alert-item">
+            <div class="alert-icon info">📄</div>
+            <div class="alert-content" style="flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 0.5rem;">
+                <div>
+                  <h4>Report Generated</h4>
+                  <p>Authority Admin</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span class="badge badge-outline">View</span>
+                  <span style="font-size: 0.75rem; color: var(--muted-foreground);">🕐 2026-01-12 14:12:08</span>
+                </div>
+              </div>
+              <p style="margin-top: 0.5rem;">Generated monthly compliance report for all zones</p>
+              <p style="font-size: 0.75rem; color: var(--muted-foreground); margin-top: 0.25rem;">Log ID: LOG-2026-0149</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 0.875rem; color: var(--muted-foreground);">Showing 1-8 of 156 entries</span>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-outline btn-sm" disabled>Previous</button>
+            <button class="btn btn-outline btn-sm">Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Fetch audit logs on page load
+    async function loadAuditLogs() {
+      try {
+        const response = await fetch('/api/audit-logs', {
+          credentials: 'include'
+        });
+        
+        if (response.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+        
+        const data = await response.json();
+        
+        if (data && data.length > 0) {
+          const cardContent = document.querySelector('.card-content');
+          if (cardContent) {
+            cardContent.innerHTML = '';
+            
+            data.forEach(log => {
+              const alertDiv = document.createElement('div');
+              alertDiv.className = 'alert-item';
+              
+              const icon = getLogIcon(log.action);
+              const badgeClass = getBadgeClass(log.action);
+              
+              alertDiv.innerHTML = `
+                <div class="alert-icon ${badgeClass.replace('badge-', '')}">${icon}</div>
+                <div class="alert-content" style="flex: 1;">
+                  <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 0.5rem;">
+                    <div>
+                      <h4>${log.description}</h4>
+                      <p>${log.user_name} (${log.user_role})</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                      <span class="badge ${badgeClass}">${log.action.charAt(0).toUpperCase() + log.action.slice(1)}</span>
+                      <span style="font-size: 0.75rem; color: var(--muted-foreground);">🕐 ${formatTimestamp(log.timestamp)}</span>
+                    </div>
+                  </div>
+                  ${log.related_entry_id ? `<p style="font-size: 0.75rem; color: var(--muted-foreground); margin-top: 0.25rem;">Log ID: ${log.log_id}</p>` : ''}
+                </div>
+              `;
+              cardContent.appendChild(alertDiv);
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error loading audit logs:', error);
+      }
+    }
+    
+    function getLogIcon(action) {
+      const icons = {
+        'create': '➕',
+        'approve': '✓',
+        'reject': '✗',
+        'edit': '✏️',
+        'view': '👁️',
+        'login': '🔐',
+        'logout': '🚪',
+        'delete': '🗑️'
+      };
+      return icons[action.toLowerCase()] || '📄';
+    }
+    
+    function getBadgeClass(action) {
+      const classes = {
+        'create': 'badge-info',
+        'approve': 'badge-success',
+        'reject': 'badge-danger',
+        'edit': 'badge-warning',
+        'view': 'badge-outline',
+        'login': 'badge-info',
+        'logout': 'badge-outline',
+        'delete': 'badge-danger'
+      };
+      return classes[action.toLowerCase()] || 'badge-outline';
+    }
+    
+    function formatTimestamp(timestamp) {
+      if (!timestamp) return 'Unknown';
+      const date = new Date(timestamp);
+      return date.toLocaleString();
+    }
+    
+    // Load audit logs when page loads
+    loadAuditLogs();
+  </script>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-bottom">
+        <span>© 2026 FarmGuard. All rights reserved.</span>
+        <span>AI-Assisted Livestock Antimicrobial Use & Food Safety Platform</span>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authority Dashboard - FarmGuard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="index.html" class="logo">
+          <!--<div class="logo-icon">🌾</div>-->
+          <div class="logo-icon">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L4 5V10C4 15 7.5 19.5 12 22C16.5 19.5 20 15 20 10V5L12 2Z"/>
+            </svg>
+          </div>
+          <span>FarmGuard</span>
+        </a>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Overview</div>
+          <a href="authority-dashboard.html" class="sidebar-link active">
+            <span class="icon">📊</span> Dashboard
+          </a>
+          <a href="analytics.html" class="sidebar-link">
+            <span class="icon">📈</span> Analytics
+          </a>
+          <a href="#" class="sidebar-link">
+            <span class="icon">🗺️</span> Regional View
+          </a>
+        </div>
+        
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Compliance</div>
+          <a href="#" class="sidebar-link">
+            <span class="icon">📋</span> All Entries
+          </a>
+          <a href="#" class="sidebar-link">
+            <span class="icon">⚠️</span> Violations
+          </a>
+          <a href="alerts.html" class="sidebar-link">
+            <span class="icon">🔔</span> Alerts
+          </a>
+        </div>
+        
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Reports</div>
+          <a href="#" class="sidebar-link">
+            <span class="icon">📄</span> Generate Reports
+          </a>
+          <a href="audit-log.html" class="sidebar-link">
+            <span class="icon">📜</span> Audit Log
+          </a>
+          <a href="#" class="sidebar-link">
+            <span class="icon">📥</span> Export Data
+          </a>
+        </div>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">AD</div>
+          <div class="user-details">
+            <div class="user-name">Admin User</div>
+            <div class="user-role">Authority</div>
+          </div>
+        </div>
+        <a href="/logout" class="btn btn-ghost btn-sm" style="width: 100%; margin-top: 0.5rem;">
+          Logout
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="page-header" style="display: flex; justify-content: space-between; align-items: start;">
+        <div>
+          <h1>Authority Dashboard</h1>
+          <p>National compliance overview and monitoring</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-outline" id="exportReportBtn">📥 Export Report</button>
+          <button class="btn btn-primary" id="generateReportBtn">📄 Generate Report</button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon primary">📊</div>
+          <div class="stat-info">
+            <h3>Total Entries</h3>
+            <div class="value">12,458</div>
+            <div class="trend up">↑ 8.3% from last month</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon success">✓</div>
+          <div class="stat-info">
+            <h3>National Compliance</h3>
+            <div class="value">96.2%</div>
+            <div class="trend up">↑ 1.5% improvement</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon warning">⚠️</div>
+          <div class="stat-info">
+            <h3>Active Violations</h3>
+            <div class="value">47</div>
+            <div class="trend down">↓ 12 from last week</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon accent">🏠</div>
+          <div class="stat-info">
+            <h3>Registered Farms</h3>
+            <div class="value">3,842</div>
+            <div class="trend up">↑ 156 new this month</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+        <!-- Compliance Trend Chart -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Compliance Trend (Last 6 Months)</h3>
+              <p class="card-description">National compliance rate over time</p>
+            </div>
+          </div>
+          <div class="card-content">
+            <canvas id="complianceTrendChart" style="max-height: 300px;"></canvas>
+            <div id="complianceTrendLegend" style="margin-top: 1rem; display: flex; justify-content: space-around; flex-wrap: wrap; gap: 0.5rem; font-size: 0.875rem;"></div>
+          </div>
+        </div>
+
+        <!-- Regional Distribution -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Regional Distribution</h3>
+              <p class="card-description">Entries by zone</p>
+            </div>
+          </div>
+          <div class="card-content">
+            <canvas id="regionalChart" style="max-height: 200px;"></canvas>
+            <div id="regionalDistributionList" style="margin-top: 1rem;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Section -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <!-- Top Antimicrobials -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Top Antimicrobials Used</h3>
+              <p class="card-description">Most frequently prescribed drugs this month</p>
+            </div>
+          </div>
+          <div class="card-content">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Drug Name</th>
+                    <th>Usage Count</th>
+                    <th>% of Total</th>
+                    <th>Trend</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Oxytetracycline</td>
+                    <td>2,456</td>
+                    <td>19.7%</td>
+                    <td><span class="badge badge-success">↑ 5%</span></td>
+                  </tr>
+                  <tr>
+                    <td>Amoxicillin</td>
+                    <td>2,103</td>
+                    <td>16.9%</td>
+                    <td><span class="badge badge-info">→ 0%</span></td>
+                  </tr>
+                  <tr>
+                    <td>Enrofloxacin</td>
+                    <td>1,876</td>
+                    <td>15.1%</td>
+                    <td><span class="badge badge-danger">↓ 3%</span></td>
+                  </tr>
+                  <tr>
+                    <td>Penicillin G</td>
+                    <td>1,654</td>
+                    <td>13.3%</td>
+                    <td><span class="badge badge-success">↑ 2%</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Entries -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Recent AMU Entries</h3>
+              <p class="card-description">All entries with their approval status</p>
+            </div>
+          </div>
+          <div class="card-content">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Entry ID</th>
+                    <th>Farmer</th>
+                    <th>Animal</th>
+                    <th>Drug</th>
+                    <th>Dosage</th>
+                    <th>Status</th>
+                    <th>Reviewed By</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody id="recentEntriesTable">
+                  <tr>
+                    <td colspan="8" style="text-align: center; padding: 2rem; color: var(--muted-foreground);">Loading entries...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script>
+    // Add these functions to authority-dashboard.html script
+
+async function updateTopAntimicrobials(drugAnalytics) {
+  const tableBody = document.querySelector('.table-container tbody');
+  if (tableBody) {
+    tableBody.innerHTML = '';
+    
+    drugAnalytics.slice(0, 4).forEach((drug, index) => {
+      const row = document.createElement('tr');
+      
+      // Determine trend (simple logic - you can enhance this)
+      const trends = ['↑ 5%', '→ 0%', '↓ 3%', '↑ 2%'];
+      const trendColors = ['badge-success', 'badge-info', 'badge-danger', 'badge-success'];
+      const trendText = trends[index % trends.length];
+      const trendClass = trendColors[index % trendColors.length];
+      
+      row.innerHTML = `
+        <td>${drug.drug_name}</td>
+        <td>${drug.usage_count}</td>
+        <td>${drug.percentage.toFixed(1)}%</td>
+        <td><span class="badge ${trendClass}">${trendText}</span></td>
+      `;
+      tableBody.appendChild(row);
+    });
+  }
+}
+
+// Update the loadDashboardData function in authority-dashboard.html
+// Replace the existing loadDashboardData function with this enhanced version:
+
+async function loadDashboardData() {
+  try {
+    const response = await fetch('/api/authority/dashboard', {
+      credentials: 'include'
+    });
+    
+    if (response.status === 401) {
+      window.location.href = '/login';
+      return;
+    }
+    
+    const data = await response.json();
+    window.authorityDashboardData = data;
+    
+    // Update user info
+    if (data.user) {
+      document.querySelector('.user-name').textContent = data.user.name;
+      const userInitials = data.user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+      document.querySelector('.user-avatar').textContent = userInitials;
+    }
+    
+    // Update stats
+    if (data.stats) {
+      document.querySelectorAll('.stat-card')[0].querySelector('.value').textContent = data.stats.total_entries || 0;
+      document.querySelectorAll('.stat-card')[1].querySelector('.value').textContent = (data.stats.compliance_rate || 0) + '%';
+      document.querySelectorAll('.stat-card')[2].querySelector('.value').textContent = data.stats.violations || 0;
+      document.querySelectorAll('.stat-card')[3].querySelector('.value').textContent = data.stats.farms || 0;
+      
+      // Update trend indicators
+      const trendElements = document.querySelectorAll('.trend');
+      if (trendElements.length >= 1 && data.stats.entries_trend) {
+        trendElements[0].textContent = data.stats.entries_trend;
+      }
+      if (trendElements.length >= 2 && data.stats.compliance_trend) {
+        trendElements[1].textContent = data.stats.compliance_trend;
+      }
+      if (trendElements.length >= 3 && data.stats.violations_trend) {
+        trendElements[2].textContent = data.stats.violations_trend;
+      }
+      if (trendElements.length >= 4 && data.stats.farms_trend) {
+        trendElements[3].textContent = data.stats.farms_trend;
+      }
+    }
+    
+    // Update Top Antimicrobials table
+    if (data.drug_analytics && data.drug_analytics.length > 0) {
+      updateTopAntimicrobials(data.drug_analytics);
+    }
+    
+    // Update Compliance Trend Chart
+    if (data.compliance_trend && data.compliance_trend.length > 0) {
+      drawComplianceTrendChart(data.compliance_trend);
+    }
+    
+    // Update Regional Distribution Chart
+    if (data.regional_distribution && data.regional_distribution.length > 0) {
+      drawRegionalChart(data.regional_distribution);
+    }
+    
+    // Update Recent Entries table
+    if (data.recent_entries && data.recent_entries.length > 0) {
+      const tbody = document.getElementById('recentEntriesTable');
+      if (tbody) {
+        tbody.innerHTML = '';
+        data.recent_entries.forEach(entry => {
+          const row = document.createElement('tr');
+          const statusClass = entry.status === 'approved' ? 'badge-success' : 
+                             entry.status === 'pending' ? 'badge-warning' : 'badge-danger';
+          const statusText = entry.status.charAt(0).toUpperCase() + entry.status.slice(1);
+          const reviewedBy = entry.vet_name || 'Pending';
+          const date = entry.reviewed_at ? new Date(entry.reviewed_at).toLocaleDateString() : 
+                      entry.created_at ? new Date(entry.created_at).toLocaleDateString() : 'N/A';
+          
+          row.innerHTML = `
+            <td>${entry.entry_id}</td>
+            <td>${entry.farmer_name}</td>
+            <td>${entry.animal_tag}</td>
+            <td>${entry.drug_name}</td>
+            <td>${entry.dosage} ${entry.unit}</td>
+            <td><span class="badge ${statusClass}">${statusText}</span></td>
+            <td>${reviewedBy}</td>
+            <td>${date}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      }
+    } else {
+      const tbody = document.getElementById('recentEntriesTable');
+      if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem; color: var(--muted-foreground);">No entries found.</td></tr>';
+      }
+    }
+  } catch (error) {
+    console.error('Error loading dashboard:', error);
+  }
+}
+
+// Draw Compliance Trend Chart
+function drawComplianceTrendChart(trendData) {
+  const canvas = document.getElementById('complianceTrendChart');
+  if (!canvas) return;
+  
+  const ctx = canvas.getContext('2d');
+  const width = canvas.parentElement.clientWidth - 40;
+  const height = 250;
+  canvas.width = width;
+  canvas.height = height;
+  
+  const padding = { top: 20, right: 20, bottom: 40, left: 50 };
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
+  
+  // Clear canvas
+  ctx.clearRect(0, 0, width, height);
+  
+  // Find min and max values
+  const values = trendData.map(d => d.compliance_rate);
+  const minValue = Math.min(...values, 0);
+  const maxValue = Math.max(...values, 100);
+  const range = maxValue - minValue || 100;
+  
+  // Draw grid lines
+  ctx.strokeStyle = '#e5e7eb';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 5; i++) {
+    const y = padding.top + (chartHeight / 5) * i;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(width - padding.right, y);
+    ctx.stroke();
+    
+    // Y-axis labels
+    const value = maxValue - (range / 5) * i;
+    ctx.fillStyle = '#6b7280';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(value.toFixed(0) + '%', padding.left - 10, y + 4);
+  }
+  
+  // Draw line
+  ctx.strokeStyle = '#3b82f6';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  
+  trendData.forEach((point, index) => {
+    const x = padding.left + (chartWidth / (trendData.length - 1)) * index;
+    const y = padding.top + chartHeight - ((point.compliance_rate - minValue) / range) * chartHeight;
+    
+    if (index === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  });
+  ctx.stroke();
+  
+  // Draw points
+  ctx.fillStyle = '#3b82f6';
+  trendData.forEach((point, index) => {
+    const x = padding.left + (chartWidth / (trendData.length - 1)) * index;
+    const y = padding.top + chartHeight - ((point.compliance_rate - minValue) / range) * chartHeight;
+    
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // X-axis labels
+    ctx.fillStyle = '#6b7280';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(point.month, x, height - padding.bottom + 20);
+  });
+  
+  // Update legend
+  const legend = document.getElementById('complianceTrendLegend');
+  if (legend) {
+    const first = trendData[0];
+    const last = trendData[trendData.length - 1];
+    legend.innerHTML = `
+      <span><strong>Start:</strong> ${first.compliance_rate}% (${first.month})</span>
+      <span><strong>Current:</strong> ${last.compliance_rate}% (${last.month})</span>
+      <span><strong>Change:</strong> ${last.compliance_rate >= first.compliance_rate ? '+' : ''}${(last.compliance_rate - first.compliance_rate).toFixed(1)}%</span>
+    `;
+  }
+}
+
+// Draw Regional Distribution Chart
+function drawRegionalChart(regionalData) {
+  const canvas = document.getElementById('regionalChart');
+  if (!canvas) return;
+  
+  const ctx = canvas.getContext('2d');
+  const width = canvas.parentElement.clientWidth - 40;
+  const height = 200;
+  canvas.width = width;
+  canvas.height = height;
+  
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const radius = Math.min(width, height) / 2 - 20;
+  
+  // Clear canvas
+  ctx.clearRect(0, 0, width, height);
+  
+  // Calculate angles
+  const total = regionalData.reduce((sum, r) => sum + r.count, 0);
+  if (total === 0) {
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('No data available', centerX, centerY);
+    return;
+  }
+  
+  let currentAngle = -Math.PI / 2; // Start at top
+  
+  const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+  
+  // Draw pie slices
+  regionalData.forEach((region, index) => {
+    const sliceAngle = (region.count / total) * Math.PI * 2;
+    
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY);
+    ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
+    ctx.closePath();
+    ctx.fillStyle = colors[index % colors.length];
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // Draw label
+    if (region.count > 0) {
+      const labelAngle = currentAngle + sliceAngle / 2;
+      const labelX = centerX + Math.cos(labelAngle) * (radius * 0.7);
+      const labelY = centerY + Math.sin(labelAngle) * (radius * 0.7);
+      
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(region.percentage + '%', labelX, labelY);
+    }
+    
+    currentAngle += sliceAngle;
+  });
+  
+  // Update list
+  const list = document.getElementById('regionalDistributionList');
+  if (list) {
+    list.innerHTML = '';
+    regionalData.forEach((region, index) => {
+      const div = document.createElement('div');
+      div.style.cssText = 'display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border);';
+      div.innerHTML = `
+        <span style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="display: inline-block; width: 12px; height: 12px; background: ${colors[index % colors.length]}; border-radius: 2px;"></span>
+          ${region.region}
+        </span>
+        <span style="font-weight: 600;">${region.percentage}% (${region.count} entries)</span>
+      `;
+      list.appendChild(div);
+    });
+  }
+}
+
+// Load data when page loads
+loadDashboardData();
+
+function formatReportDate(value) {
+  if (!value) return 'N/A';
+  return new Date(value).toLocaleDateString();
+}
+
+function generateAuthorityReportText(data) {
+  const stats = data.stats || {};
+  const recent = Array.isArray(data.recent_entries) ? data.recent_entries : [];
+  const drugAnalytics = Array.isArray(data.drug_analytics) ? data.drug_analytics : [];
+
+  const lines = [
+    'FarmGuard Authority Compliance Report',
+    `Generated: ${new Date().toLocaleString()}`,
+    '',
+    'National Summary',
+    `- Total Entries: ${stats.total_entries || 0}`,
+    `- Compliance Rate: ${stats.compliance_rate || 0}%`,
+    `- Active Violations: ${stats.violations || 0}`,
+    `- Registered Farms: ${stats.farms || 0}`,
+    '',
+    'Top Antimicrobials',
+    ...(drugAnalytics.length
+      ? drugAnalytics.slice(0, 10).map((d, i) =>
+          `${i + 1}. ${d.drug_name} - ${d.usage_count} entries (${Number(d.percentage || 0).toFixed(1)}%)`)
+      : ['No antimicrobial usage data available.']),
+    '',
+    'Recent AMU Entries',
+    ...(recent.length
+      ? recent.slice(0, 20).map((e) =>
+          `${e.entry_id} | ${e.farmer_name} | ${e.animal_tag} | ${e.drug_name} | ${e.status} | ${formatReportDate(e.reviewed_at || e.created_at)}`)
+      : ['No recent entries available.'])
+  ];
+
+  return lines.join('\n');
+}
+
+function downloadReportFile(filename, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function handleGenerateReport() {
+  const data = window.authorityDashboardData;
+  if (!data) {
+    alert('Dashboard data is still loading. Please try again in a moment.');
+    return;
+  }
+  const reportText = generateAuthorityReportText(data);
+  downloadReportFile(
+    `authority-report-${new Date().toISOString().slice(0, 10)}.txt`,
+    reportText,
+    'text/plain;charset=utf-8'
+  );
+}
+
+function handleExportReport() {
+  const data = window.authorityDashboardData;
+  if (!data) {
+    alert('Dashboard data is still loading. Please try again in a moment.');
+    return;
+  }
+
+  const headers = ['Entry ID', 'Farmer', 'Animal', 'Drug', 'Dosage', 'Status', 'Reviewed By', 'Date'];
+  const rows = (data.recent_entries || []).map((e) => [
+    e.entry_id || '',
+    e.farmer_name || '',
+    e.animal_tag || '',
+    e.drug_name || '',
+    `${e.dosage ?? ''} ${e.unit ?? ''}`.trim(),
+    e.status || '',
+    e.vet_name || 'Pending',
+    formatReportDate(e.reviewed_at || e.created_at)
+  ]);
+
+  const csvLines = [
+    headers.join(','),
+    ...rows.map((row) =>
+      row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(',')
+    )
+  ];
+
+  downloadReportFile(
+    `authority-entries-${new Date().toISOString().slice(0, 10)}.csv`,
+    csvLines.join('\n'),
+    'text/csv;charset=utf-8'
+  );
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const generateBtn = document.getElementById('generateReportBtn');
+  const exportBtn = document.getElementById('exportReportBtn');
+  if (generateBtn) generateBtn.addEventListener('click', handleGenerateReport);
+  if (exportBtn) exportBtn.addEventListener('click', handleExportReport);
+
+  loadDashboardData();
+  // Real-time automatic polling every 4 seconds
+  setInterval(loadDashboardData, 4000);
+});
+  </script>
+</body>
+</html>

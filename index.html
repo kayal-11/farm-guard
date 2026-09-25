@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Farm Management Portal - AMU/MRL Monitoring</title>
+  <meta name="description" content="Digital Farm Management Portal for monitoring Maximum Residue Limits (MRL) and Antimicrobial Usage (AMU) in livestock">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-container">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L4 5V10C4 15 7.5 19.5 12 22C16.5 19.5 20 15 20 10V5L12 2Z"/>
+          </svg>
+        </div>
+        <span>FarmGuard</span>
+      </a>
+      
+      <nav class="nav">
+        <div class="nav-links">
+          <a href="index.html" class="nav-link active">Home</a>
+          <a href="analytics.html" class="nav-link">Analytics</a>
+          <a href="audit-log.html" class="nav-link">Audit Log</a>
+          <a href="alerts.html" class="nav-link">Alerts</a>
+        </div>
+        <a href="login.html" class="btn btn-primary">Login</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-container">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="dot"></span>
+          AI-Assisted AMU & Food Safety Platform
+        </div>
+        <h1>Digital Farm Management for Safer Livestock</h1>
+        <p>Monitor antimicrobial usage and ensure maximum residue limit compliance with our comprehensive digital platform designed for farmers, veterinarians, and regulatory authorities.</p>
+        <div class="hero-buttons">
+          <a href="login.html" class="btn btn-primary btn-lg">Get Started</a>
+          <a href="#roles" class="btn btn-outline btn-lg">Learn More</a>
+        </div>
+      </div>
+      
+      <div class="hero-visual">
+        <div class="hero-card">
+          <div class="hero-card-header">
+            <span class="hero-card-title">Live Compliance Status</span>
+            <span class="hero-card-badge">● Active</span>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-value" id="homeComplianceRate">...</div>
+              <div class="stat-label">Compliance Rate</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="homeActiveEntries">...</div>
+              <div class="stat-label">Active Entries</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="homePendingReview">...</div>
+              <div class="stat-label">Pending Review</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Roles Section -->
+  <section class="section" id="roles">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="section-badge">Role-Based Access</span>
+        <h2 class="section-title">Tailored for Every Stakeholder</h2>
+        <p class="section-description">Our platform provides specialized interfaces for farmers, veterinarians, and regulatory authorities.</p>
+      </div>
+      
+      <div class="roles-grid">
+        <!-- Farmer Card -->
+        <div class="role-card">
+          <div class="role-icon">👨‍🌾</div>
+          <h3>Farmer</h3>
+          <p>Record and track antimicrobial usage for your livestock with ease.</p>
+          <ul class="role-features">
+            <li>Log AMU entries</li>
+            <li>Track withdrawal periods</li>
+            <li>Receive compliance alerts</li>
+            <li>View treatment history</li>
+          </ul>
+          <a href="farmer-dashboard.html" class="btn btn-outline">Access Dashboard</a>
+        </div>
+        
+        <!-- Veterinarian Card -->
+        <div class="role-card">
+          <div class="role-icon">👨‍⚕️</div>
+          <h3>Veterinarian</h3>
+          <p>Review prescriptions and validate dosage compliance efficiently.</p>
+          <ul class="role-features">
+            <li>Approve prescriptions</li>
+            <li>Validate dosages</li>
+            <li>Monitor farm compliance</li>
+            <li>Issue recommendations</li>
+          </ul>
+          <a href="vet-dashboard.html" class="btn btn-outline">Access Dashboard</a>
+        </div>
+        
+        <!-- Authority Card -->
+        <div class="role-card">
+          <div class="role-icon">🏛️</div>
+          <h3>Authority</h3>
+          <p>Monitor regional compliance and generate regulatory reports.</p>
+          <ul class="role-features">
+            <li>View compliance reports</li>
+            <li>Analyze regional trends</li>
+            <li>Access audit logs</li>
+            <li>Generate statistics</li>
+          </ul>
+          <a href="authority-dashboard.html" class="btn btn-outline">Access Dashboard</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Workflow Section -->
+  <section class="section" style="background: var(--accent);">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="section-badge">How It Works</span>
+        <h2 class="section-title">Simple 4-Step Workflow</h2>
+        <p class="section-description">From entry to compliance verification, our streamlined process ensures food safety.</p>
+      </div>
+      
+      <div class="workflow-grid">
+        <div class="workflow-step">
+          <div class="workflow-number">1</div>
+          <h4>Record Entry</h4>
+          <p>Farmer logs antimicrobial treatment details</p>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-number">2</div>
+          <h4>Vet Review</h4>
+          <p>Veterinarian validates prescription and dosage</p>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-number">3</div>
+          <h4>Withdrawal Period</h4>
+          <p>System tracks and alerts on withdrawal timelines</p>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-number">4</div>
+          <h4>Compliance Check</h4>
+          <p>Authority monitors and verifies MRL compliance</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+        <div class="logo-icon">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L4 5V10C4 15 7.5 19.5 12 22C16.5 19.5 20 15 20 10V5L12 2Z"/>
+          </svg>
+        </div>
+        <span>FarmGuard</span>
+        <!--
+          <div class="logo">
+            <div class="logo-icon">🌾</div>
+            <span>FarmGuard</span>
+          </div>-->
+          <p>Ensuring food safety through digital innovation. AI-Assisted Livestock Antimicrobial Use & Food Safety Platform.</p>
+        </div>
+        
+        <div class="footer-column">
+          <h4>Platform</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="analytics.html">Analytics</a></li>
+            <li><a href="audit-log.html">Audit Log</a></li>
+            <li><a href="alerts.html">Alerts</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-column">
+          <h4>Dashboards</h4>
+          <ul>
+            <li><a href="farmer-dashboard.html">Farmer Portal</a></li>
+            <li><a href="vet-dashboard.html">Vet Portal</a></li>
+            <li><a href="authority-dashboard.html">Authority Portal</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-column">
+          <h4>Resources</h4>
+          <ul>
+            <li><a href="#">Documentation</a></li>
+            <li><a href="#">Guidelines</a></li>
+            <li><a href="#">Support</a></li>
+            <li><a href="#">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="footer-bottom">
+        <span>© 2026 FarmGuard. All rights reserved.</span>
+        <span>AI-Assisted Livestock Antimicrobial Use & Food Safety Platform</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    async function loadHomePublicStats() {
+      try {
+        const response = await fetch('/api/public-stats');
+        if (response.ok) {
+          const stats = await response.json();
+          document.getElementById('homeComplianceRate').textContent = (stats.compliance_rate || 100) + '%';
+          document.getElementById('homeActiveEntries').textContent = stats.active_entries || 0;
+          document.getElementById('homePendingReview').textContent = stats.pending_review || 0;
+        }
+      } catch (e) {
+        console.error('Error fetching home public stats:', e);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadHomePublicStats();
+      // Real-time automatic polling every 4 seconds
+      setInterval(loadHomePublicStats, 4000);
+    });
+  </script>
+</body>
+</html>
