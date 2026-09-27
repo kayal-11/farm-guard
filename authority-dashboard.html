@@ -348,13 +348,17 @@ async function loadDashboardData() {
           const date = entry.reviewed_at ? new Date(entry.reviewed_at).toLocaleDateString() : 
                       entry.created_at ? new Date(entry.created_at).toLocaleDateString() : 'N/A';
           
+          const reportLink = entry.status === 'approved' 
+            ? `<div style="margin-top: 0.3rem;"><a href="/api/amu-entries/${entry.id}/report" target="_blank" class="btn btn-outline btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; color: #15803d; border-color: #86efac; background: #f0fdf4; text-decoration: none; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.2rem; font-weight: 600;">📄 Report</a></div>` 
+            : '';
+          
           row.innerHTML = `
             <td>${entry.entry_id}</td>
             <td>${entry.farmer_name}</td>
             <td>${entry.animal_tag}</td>
             <td>${entry.drug_name}</td>
             <td>${entry.dosage} ${entry.unit}</td>
-            <td><span class="badge ${statusClass}">${statusText}</span></td>
+            <td><span class="badge ${statusClass}">${statusText}</span>${reportLink}</td>
             <td>${reviewedBy}</td>
             <td>${date}</td>
           `;

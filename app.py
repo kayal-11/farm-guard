@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, redirect, url_for, session, send_from_directory
+from flask import Flask, request, jsonify, redirect, url_for, session, send_from_directory, send_file
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 import os
 import uuid
+import io
 from rag_engine import rag_engine_instance
 
 load_dotenv()
@@ -438,11 +439,11 @@ def amu_entries_api():
     data = request.get_json()
     entry_id = f"AMU-{datetime.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:4].upper()}"
 
-    drug = Drug.query.get(data['drug_id'])
+    drug = db.session.get(Drug, data['drug_id'])
     if not drug:
         return jsonify({'error': 'Drug not found'}), 404
 
-    animal = Animal.query.get(data['animal_id'])
+    animal = db.session.get(Animal, data['animal_id'])
     if not animal:
         return jsonify({'error': 'Animal not found'}), 404
     if animal.farmer_id != session['user_id']:
@@ -545,7 +546,7 @@ def amu_entries_api():
 @require_roles('vet')
 def review_entry(entry_id):
     data = request.get_json()
-    entry = AMUEntry.query.get(entry_id)
+    entry = db.session.get(AMUEntry, entry_id)
 
     if not entry:
         return jsonify({'error': 'Entry not found'}), 404
@@ -571,7 +572,7 @@ def review_entry(entry_id):
         user_id=entry.farmer_id,
         alert_type='notification',
         title=f"Entry {data['status'].capitalize()}",
-        message=f"Your AMU entry {entry.entry_id} has been {data['status']} by {User.query.get(session['user_id']).name}",
+        message=f"Your AMU entry {entry.entry_id} has been {data['status']} by {db.session.get(User, session['user_id']).name}",
         priority='high' if data['status'] == 'rejected' else 'normal'
     )
     db.session.add(alert)
@@ -622,7 +623,7 @@ def check_session():
     if 'user_id' not in session:
         return jsonify({'authenticated': False}), 401
 
-    user = User.query.get(session['user_id'])
+    user = db.session.get(User, session['user_id'])
     if not user:
         return jsonify({'authenticated': False}), 401
 
@@ -639,7 +640,7 @@ def check_session():
 @app.route('/api/user')
 @require_roles('farmer', 'vet', 'authority')
 def get_user():
-    user = User.query.get(session['user_id'])
+    user = db.session.get(User, session['user_id'])
     if not user:
         return jsonify({'error': 'User not found'}), 404
 
@@ -1123,7 +1124,7 @@ def get_audit_logs():
 @app.route('/api/amu-entries/<int:entry_id>')
 @require_roles('farmer', 'vet', 'authority')
 def get_entry(entry_id):
-    entry = AMUEntry.query.get(entry_id)
+    entry = db.session.get(AMUEntry, entry_id)
     if not entry:
         return jsonify({'error': 'Entry not found'}), 404
 
@@ -1214,6 +1215,371 @@ def format_time_ago(dt):
         return f"{hours} hour{'s' if hours > 1 else ''} ago"
     minutes = delta.seconds // 60
     return f"{minutes} minute{'s' if minutes > 1 else ''} ago"
+
+
+def generate_compliance_pdf(data):
+    from reportlab.lib.pagesizes import letter
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib import colors
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=36,
+        leftMargin=36,
+        topMargin=36,
+        bottomMargin=36
+    )
+    
+    styles = getSampleStyleSheet()
+    
+    title_style = ParagraphStyle(
+        'DocTitle',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=18,
+        leading=22,
+        textColor=colors.HexColor('#0f172a'),
+        alignment=1
+    )
+    
+    subtitle_style = ParagraphStyle(
+        'DocSubtitle',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=11,
+        leading=14,
+        textColor=colors.HexColor('#0284c7'),
+        alignment=1
+    )
+
+    section_heading = ParagraphStyle(
+        'SectionHeading',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=12,
+        leading=16,
+        textColor=colors.HexColor('#1e293b'),
+        spaceAfter=6
+    )
+
+    cell_bold = ParagraphStyle(
+        'CellBold',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=9.5,
+        leading=12,
+        textColor=colors.HexColor('#334155')
+    )
+
+    cell_normal = ParagraphStyle(
+        'CellNormal',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=9.5,
+        leading=12,
+        textColor=colors.HexColor('#0f172a')
+    )
+
+    highlight_title = ParagraphStyle(
+        'HighlightTitle',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=13,
+        leading=16,
+        textColor=colors.HexColor('#854d0e'),
+        alignment=1
+    )
+
+    highlight_date = ParagraphStyle(
+        'HighlightDate',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=15,
+        leading=19,
+        textColor=colors.HexColor('#15803d'),
+        alignment=1
+    )
+
+    highlight_sub = ParagraphStyle(
+        'HighlightSub',
+        parent=styles['Normal'],
+        fontName='Helvetica-Oblique',
+        fontSize=8.5,
+        leading=11,
+        textColor=colors.HexColor('#713f12'),
+        alignment=1
+    )
+
+    disclaimer_style = ParagraphStyle(
+        'Disclaimer',
+        parent=styles['Normal'],
+        fontName='Helvetica-Oblique',
+        fontSize=8,
+        leading=10,
+        textColor=colors.HexColor('#64748b'),
+        alignment=1
+    )
+
+    story = []
+
+    # Header
+    story.append(Paragraph("FARMGUARD NATIONAL LIVESTOCK SAFETY AUTHORITY", title_style))
+    story.append(Spacer(1, 4))
+    story.append(Paragraph("OFFICIAL TREATMENT & WITHDRAWAL COMPLIANCE CERTIFICATE", subtitle_style))
+    story.append(Spacer(1, 8))
+    
+    # Meta bar table
+    meta_data = [
+        [
+            Paragraph(f"<b>Report/Entry ID:</b> {data['entry_id']}", cell_normal),
+            Paragraph(f"<b>Approval Status:</b> <font color='#16a34a'><b>APPROVED</b></font>", cell_normal),
+            Paragraph(f"<b>Approval Date:</b> {data['approval_date']}", cell_normal)
+        ]
+    ]
+    meta_table = Table(meta_data, colWidths=[200, 170, 170])
+    meta_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#f8fafc')),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#cbd5e1')),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('PADDING', (0,0), (-1,-1), 6),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE')
+    ]))
+    story.append(meta_table)
+    story.append(Spacer(1, 12))
+
+    # Prominent Highlight Box for EXPECTED SELLING / SAFE-TO-SELL DATE ⭐
+    safe_date_str = data['expected_safe_to_sell_date']
+    withdrawal_days = data['withdrawal_period_days']
+    treatment_date_str = data['treatment_date']
+
+    highlight_content = [
+        [Paragraph("⭐ EXPECTED SELLING & SAFE-TO-SELL DATE ⭐", highlight_title)],
+        [Spacer(1, 4)],
+        [Paragraph(f"<b>{safe_date_str}</b>", highlight_date)],
+        [Spacer(1, 4)],
+        [Paragraph(f"<b>Treatment Date:</b> {treatment_date_str} &nbsp;&nbsp;|&nbsp;&nbsp; <b>Verified Withdrawal Period:</b> {withdrawal_days} Days", ParagraphStyle('SubInfo', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=10, leading=13, textColor=colors.HexColor('#334155'), alignment=1))],
+        [Spacer(1, 6)],
+        [Paragraph("<b>FOOD SAFETY COMPLIANCE NOTICE:</b> Animal products (meat/milk) clear mandatory drug withdrawal on or after this calculated date. This certificate verifies withdrawal compliance under CDSCO/FSSAI standards. <i>This document certifies regulatory compliance and does NOT claim or record actual commercial product sale.</i>", highlight_sub)]
+    ]
+    highlight_table = Table(highlight_content, colWidths=[540])
+    highlight_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#fefce8')),
+        ('BOX', (0,0), (-1,-1), 1.5, colors.HexColor('#eab308')),
+        ('PADDING', (0,0), (-1,-1), 8),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER')
+    ]))
+    story.append(highlight_table)
+    story.append(Spacer(1, 14))
+
+    # Section 1: Farmer & Animal Details
+    story.append(Paragraph("1. Farmer & Livestock Identification", section_heading))
+    farm_details = [
+        [Paragraph("Farmer Name", cell_bold), Paragraph(str(data.get('farmer_name', 'N/A')), cell_normal), Paragraph("Animal Tag ID", cell_bold), Paragraph(str(data.get('animal_tag', 'N/A')), cell_normal)],
+        [Paragraph("Contact / Phone", cell_bold), Paragraph(str(data.get('farmer_phone', 'N/A')), cell_normal), Paragraph("Species", cell_bold), Paragraph(str(data.get('animal_species', 'N/A')), cell_normal)]
+    ]
+    t_farm = Table(farm_details, colWidths=[120, 150, 120, 150])
+    t_farm.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (0,-1), colors.HexColor('#f1f5f9')),
+        ('BACKGROUND', (2,0), (2,-1), colors.HexColor('#f1f5f9')),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#cbd5e1')),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('PADDING', (0,0), (-1,-1), 5),
+    ]))
+    story.append(t_farm)
+    story.append(Spacer(1, 12))
+
+    # Section 2: Veterinary Treatment & Administration Record
+    story.append(Paragraph("2. Veterinary Treatment & Administration Record", section_heading))
+    treat_details = [
+        [Paragraph("Drug / Product Name", cell_bold), Paragraph(str(data.get('drug_name', 'N/A')), cell_normal), Paragraph("Active Ingredient", cell_bold), Paragraph(str(data.get('active_ingredient', 'N/A')), cell_normal)],
+        [Paragraph("Route of Admin.", cell_bold), Paragraph(str(data.get('route', 'N/A')), cell_normal), Paragraph("Prescribed Dosage", cell_bold), Paragraph(f"{data.get('dosage', '')} {data.get('unit', '')}", cell_normal)],
+        [Paragraph("Medical Indication", cell_bold), Paragraph(str(data.get('indication', 'N/A')), cell_normal), Paragraph("Treatment Date", cell_bold), Paragraph(str(data.get('treatment_date', 'N/A')), cell_normal)]
+    ]
+    t_treat = Table(treat_details, colWidths=[120, 150, 120, 150])
+    t_treat.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (0,-1), colors.HexColor('#f1f5f9')),
+        ('BACKGROUND', (2,0), (2,-1), colors.HexColor('#f1f5f9')),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#cbd5e1')),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('PADDING', (0,0), (-1,-1), 5),
+    ]))
+    story.append(t_treat)
+    story.append(Spacer(1, 12))
+
+    # Section 3: Regulatory Verification & Veterinary Approval
+    story.append(Paragraph("3. Regulatory Verification & Veterinary Approval", section_heading))
+    vet_details = [
+        [Paragraph("Vet Approval Status", cell_bold), Paragraph(f"<font color='#16a34a'><b>{str(data.get('status', 'APPROVED')).upper()}</b></font>", cell_normal), Paragraph("Approval Date", cell_bold), Paragraph(str(data.get('approval_date', 'N/A')), cell_normal)],
+        [Paragraph("Verified By Vet", cell_bold), Paragraph(str(data.get('vet_name', 'Licensed Veterinary Officer')), cell_normal), Paragraph("RAG Status", cell_bold), Paragraph(str(data.get('verification_status', 'Verified / Matched')).capitalize(), cell_normal)],
+        [Paragraph("Veterinary Notes", cell_bold), Paragraph(str(data.get('vet_notes', 'All parameters reviewed and verified compliant.')), cell_normal), Paragraph("Authority Reference", cell_bold), Paragraph(str(data.get('source_reference', 'CDSCO Official Schedule & Codex CAC/MRL 2-2023')), cell_normal)]
+    ]
+    t_vet = Table(vet_details, colWidths=[120, 150, 120, 150])
+    t_vet.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (0,-1), colors.HexColor('#f1f5f9')),
+        ('BACKGROUND', (2,0), (2,-1), colors.HexColor('#f1f5f9')),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#cbd5e1')),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('PADDING', (0,0), (-1,-1), 5),
+    ]))
+    story.append(t_vet)
+    story.append(Spacer(1, 16))
+
+    # Footer Traceability Box
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#cbd5e1'), spaceBefore=5, spaceAfter=10))
+    trace_text = f"<b>Traceable Certificate Verification:</b> Dairy collection agents and food processing authorities can authenticate this compliance report by verifying Entry ID <b>{data['entry_id']}</b> on the official FarmGuard Regulatory Portal."
+    story.append(Paragraph(trace_text, disclaimer_style))
+    story.append(Spacer(1, 6))
+    story.append(Paragraph("FarmGuard Regulatory System &bull; CDSCO & Codex Alimentarius Standard Compliance &bull; Generated Automatically", disclaimer_style))
+
+    doc.build(story)
+    return buffer.getvalue()
+
+
+def generate_compliance_html(data):
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Compliance Certificate - {data['entry_id']}</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 40px; color: #0f172a; line-height: 1.5; background: #fff; }}
+        .certificate {{ max-width: 800px; margin: 0 auto; padding: 20px; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }}
+        .header {{ text-align: center; border-bottom: 2px solid #0284c7; padding-bottom: 15px; margin-bottom: 20px; }}
+        .header h1 {{ font-size: 20px; margin: 0; color: #0f172a; font-weight: bold; }}
+        .header h2 {{ font-size: 13px; margin: 5px 0 0 0; color: #0284c7; letter-spacing: 0.5px; font-weight: bold; }}
+        .meta-bar {{ display: flex; justify-content: space-between; background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-size: 13px; }}
+        .highlight-box {{ background: #fefce8; border: 2px solid #eab308; border-radius: 8px; padding: 18px; text-align: center; margin-bottom: 25px; }}
+        .highlight-title {{ font-weight: bold; font-size: 15px; color: #854d0e; margin-bottom: 8px; }}
+        .highlight-date {{ font-size: 22px; font-weight: bold; color: #15803d; margin-bottom: 8px; }}
+        .highlight-sub {{ font-size: 13px; font-weight: bold; color: #334155; margin-bottom: 10px; }}
+        .highlight-notice {{ font-size: 11px; color: #713f12; font-style: italic; text-align: justify; }}
+        .section-heading {{ font-size: 14px; font-weight: bold; color: #1e293b; margin-top: 20px; margin-bottom: 8px; border-left: 4px solid #0284c7; padding-left: 8px; }}
+        table {{ width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }}
+        th, td {{ border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }}
+        th {{ background: #f1f5f9; font-weight: bold; width: 25%; color: #334155; }}
+        .footer {{ margin-top: 30px; border-top: 1px solid #cbd5e1; padding-top: 12px; text-align: center; font-size: 11px; color: #64748b; }}
+        @media print {{
+            body {{ margin: 0; padding: 0; background: #fff; }}
+            .certificate {{ border: none; box-shadow: none; }}
+            .no-print {{ display: none; }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="no-print" style="max-width: 800px; margin: 0 auto 15px auto; text-align: right;">
+        <button onclick="window.print()" style="padding: 10px 20px; background: #16a34a; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">🖨️ Print / Save as PDF</button>
+    </div>
+    <div class="certificate">
+        <div class="header">
+            <h1>FARMGUARD NATIONAL LIVESTOCK SAFETY AUTHORITY</h1>
+            <h2>OFFICIAL TREATMENT & WITHDRAWAL COMPLIANCE CERTIFICATE</h2>
+        </div>
+        <div class="meta-bar">
+            <div><strong>Report/Entry ID:</strong> {data['entry_id']}</div>
+            <div><strong>Approval Status:</strong> <span style="color: #16a34a; font-weight: bold;">APPROVED</span></div>
+            <div><strong>Approval Date:</strong> {data['approval_date']}</div>
+        </div>
+        <div class="highlight-box">
+            <div class="highlight-title">⭐ EXPECTED SELLING & SAFE-TO-SELL DATE ⭐</div>
+            <div class="highlight-date">{data['expected_safe_to_sell_date']}</div>
+            <div class="highlight-sub">Treatment Date: {data['treatment_date']} &nbsp;|&nbsp; Verified Withdrawal Period: {data['withdrawal_period_days']} Days</div>
+            <div class="highlight-notice"><strong>FOOD SAFETY COMPLIANCE NOTICE:</strong> Animal products (meat/milk) clear mandatory drug withdrawal on or after this calculated date. This certificate verifies withdrawal compliance under CDSCO/FSSAI standards. <em>This document certifies regulatory compliance and does NOT claim or record actual commercial product sale.</em></div>
+        </div>
+        <div class="section-heading">1. Farmer & Livestock Identification</div>
+        <table>
+            <tr><th>Farmer Name</th><td>{data.get('farmer_name', 'N/A')}</td><th>Animal Tag ID</th><td>{data.get('animal_tag', 'N/A')}</td></tr>
+            <tr><th>Contact / Phone</th><td>{data.get('farmer_phone', 'N/A')}</td><th>Species</th><td>{data.get('animal_species', 'N/A')}</td></tr>
+        </table>
+        <div class="section-heading">2. Veterinary Treatment & Administration Record</div>
+        <table>
+            <tr><th>Drug / Product Name</th><td>{data.get('drug_name', 'N/A')}</td><th>Active Ingredient</th><td>{data.get('active_ingredient', 'N/A')}</td></tr>
+            <tr><th>Route of Admin.</th><td>{data.get('route', 'N/A')}</td><th>Prescribed Dosage</th><td>{data.get('dosage', '')} {data.get('unit', '')}</td></tr>
+            <tr><th>Medical Indication</th><td>{data.get('indication', 'N/A')}</td><th>Treatment Date</th><td>{data.get('treatment_date', 'N/A')}</td></tr>
+        </table>
+        <div class="section-heading">3. Regulatory Verification & Veterinary Approval</div>
+        <table>
+            <tr><th>Vet Approval Status</th><td><strong style="color: #16a34a;">APPROVED</strong></td><th>Approval Date</th><td>{data.get('approval_date', 'N/A')}</td></tr>
+            <tr><th>Verified By Vet</th><td>{data.get('vet_name', 'Licensed Veterinary Officer')}</td><th>RAG Status</th><td>{str(data.get('verification_status', 'Verified / Matched')).capitalize()}</td></tr>
+            <tr><th>Veterinary Notes</th><td>{data.get('vet_notes', 'All parameters reviewed and verified compliant.')}</td><th>Authority Reference</th><td>{data.get('source_reference', 'CDSCO Official Schedule & Codex CAC/MRL 2-2023')}</td></tr>
+        </table>
+        <div class="footer">
+            <p><strong>Traceable Certificate Verification:</strong> Dairy collection agents and food processing authorities can authenticate this compliance report by verifying Entry ID <strong>{data['entry_id']}</strong> on the official FarmGuard Regulatory Portal.</p>
+            <p>FarmGuard Regulatory System &bull; CDSCO & Codex Alimentarius Standard Compliance &bull; Generated Automatically</p>
+        </div>
+    </div>
+</body>
+</html>"""
+
+
+@app.route('/api/amu-entries/<int:entry_id>/report', methods=['GET'])
+@app.route('/api/amu-entries/<int:entry_id>/pdf', methods=['GET'])
+@require_roles('farmer', 'vet', 'authority')
+def download_compliance_report(entry_id):
+    entry = db.session.get(AMUEntry, entry_id)
+    if not entry:
+        return jsonify({'error': 'Entry not found'}), 404
+    
+    # Farmers cannot access another farmer's compliance report
+    if session.get('role') == 'farmer' and entry.farmer_id != session['user_id']:
+        return jsonify({'error': 'Forbidden', 'message': 'You cannot access another farmer\'s treatment records'}), 403
+
+    if entry.status != 'approved':
+        return jsonify({'error': 'Bad Request', 'message': 'Compliance report is only available for approved AMU entries.'}), 400
+
+    # Calculate withdrawal period and safe-to-sell date
+    withdrawal_days = (
+        entry.rag_evidence.recommended_withdrawal_days if (entry.rag_evidence and entry.rag_evidence.recommended_withdrawal_days)
+        else (entry.drug.withdrawal_period_days if entry.drug else 0)
+    )
+    
+    t_date = entry.treatment_date
+    safe_date = entry.withdrawal_end_date or entry.expected_selling_date
+    if not safe_date and t_date:
+        safe_date = t_date + timedelta(days=withdrawal_days)
+    
+    safe_date_str = safe_date.strftime('%B %d, %Y').upper() if safe_date else 'N/A'
+    treatment_date_str = t_date.strftime('%Y-%m-%d') if t_date else 'N/A'
+    approval_date_str = entry.reviewed_at.strftime('%Y-%m-%d %H:%M UTC') if entry.reviewed_at else (entry.created_at.strftime('%Y-%m-%d %H:%M UTC') if entry.created_at else 'N/A')
+
+    report_data = {
+        'entry_id': entry.entry_id,
+        'approval_date': approval_date_str,
+        'status': entry.status,
+        'expected_safe_to_sell_date': f"{safe_date_str} (SAFE TO SELL)",
+        'withdrawal_period_days': withdrawal_days,
+        'treatment_date': treatment_date_str,
+        'farmer_name': entry.farmer.name if entry.farmer else 'N/A',
+        'farmer_phone': getattr(entry.farmer, 'phone', None) or getattr(entry.farmer, 'email', None) or 'N/A',
+        'animal_tag': entry.animal.tag_number if entry.animal else 'N/A',
+        'animal_species': entry.animal.species.capitalize() if entry.animal else 'N/A',
+        'drug_name': entry.drug.name if entry.drug else 'N/A',
+        'active_ingredient': (entry.drug.active_ingredient if (entry.drug and entry.drug.active_ingredient) else (entry.drug.name if entry.drug else 'N/A')),
+        'route': entry.route or (entry.drug.route if entry.drug else 'Injectable'),
+        'indication': entry.indication or (entry.drug.indication if entry.drug else 'General Antibacterial'),
+        'dosage': entry.dosage,
+        'unit': entry.unit,
+        'vet_name': entry.vet.name if entry.vet else 'Licensed Veterinary Officer',
+        'verification_status': entry.rag_evidence.verification_status if entry.rag_evidence else 'verified',
+        'vet_notes': entry.vet_notes or 'Treatment protocol and withdrawal period validated under CDSCO veterinary safety guidelines.',
+        'source_reference': entry.rag_evidence.source_reference if (entry.rag_evidence and entry.rag_evidence.source_reference) else (entry.drug.source if entry.drug else 'CDSCO Official Veterinary Schedule')
+    }
+
+    try:
+        from reportlab.lib.pagesizes import letter
+        pdf_bytes = generate_compliance_pdf(report_data)
+        return send_file(
+            io.BytesIO(pdf_bytes),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f"AMU_Compliance_Report_{entry.entry_id}.pdf"
+        )
+    except Exception as err:
+        print(f"ReportLab PDF generation notice ({err}), rendering printable compliance certificate.")
+        html_content = generate_compliance_html(report_data)
+        return html_content, 200, {'Content-Type': 'text/html; charset=utf-8'}
 
 
 @app.route('/api/test-db')

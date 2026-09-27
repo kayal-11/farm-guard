@@ -282,8 +282,9 @@
           </div>
           
           <div>
-            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Expected Selling Date</label>
-            <input type="date" id="expectedSellingDate" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Expected Selling / Safe-to-Sell Date ⭐</label>
+            <input type="date" id="expectedSellingDate" readonly style="width: 100%; padding: 0.75rem; border: 1px solid #c7d2fe; border-radius: 4px; background: #eef2ff; color: #3730a3; font-weight: 600;" placeholder="Auto-calculated from withdrawal period">
+            <small style="display: block; margin-top: 0.25rem; color: #4338ca; font-size: 0.75rem;">Calculated automatically from treatment date and verified CDSCO withdrawal period (cannot be manually edited).</small>
           </div>
           
           <div id="withdrawalInfo" style="padding: 1rem; background: #e3f2fd; border-radius: 4px; display: none;">
@@ -434,12 +435,15 @@
           const vetNotesHtml = vetMsg
             ? `<div style="font-size: 0.75rem; color: var(--muted-foreground); margin-top: 0.35rem; max-width: 18rem; white-space: pre-wrap;">${escapeHtml(vetMsg)}</div>`
             : '';
+          const reportBtnHtml = entry.status === 'approved'
+            ? `<div style="margin-top: 0.4rem;"><a href="/api/amu-entries/${entry.id}/report" target="_blank" class="btn btn-outline btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; color: #15803d; border-color: #86efac; background: #f0fdf4; text-decoration: none; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.3rem; font-weight: 600;">📄 Download Compliance Report</a></div>`
+            : '';
           
           row.innerHTML = `
             <td>${entry.entry_id}</td>
             <td>${entry.animal_tag}</td>
             <td>${entry.drug_name}</td>
-            <td><span class="badge ${statusClass}">${statusText}</span>${vetNotesHtml}</td>
+            <td><span class="badge ${statusClass}">${statusText}</span>${vetNotesHtml}${reportBtnHtml}</td>
           `;
           tbody.appendChild(row);
         });
@@ -580,7 +584,7 @@
         select.appendChild(option);
       });
       
-      // Update unit and withdrawal info when drug is selected
+      // Update unit, route, indication, and withdrawal info when drug is selected
       select.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
         const refBox = document.getElementById('cdscoRefBox');
@@ -596,9 +600,37 @@
             refBox.style.display = 'block';
           }
 
-          const defaultInd = (selectedOption.dataset.indication || '').split(',')[0].trim();
-          if (defaultInd && document.getElementById('indicationInput')) {
-            document.getElementById('indicationInput').value = defaultInd;
+          // Auto-fill Route of Administration
+          const rawRoute = selectedOption.dataset.route || '';
+          const routeSelect = document.getElementById('routeSelect');
+          if (rawRoute && routeSelect) {
+            const routes = rawRoute.split(',').map(r => r.trim());
+            let matched = false;
+            for (const r of routes) {
+              for (let i = 0; i < routeSelect.options.length; i++) {
+                if (routeSelect.options[i].value.toLowerCase() === r.toLowerCase()) {
+                  routeSelect.selectedIndex = i;
+                  matched = true;
+                  break;
+                }
+              }
+              if (matched) break;
+            }
+            if (!matched) {
+              for (let i = 0; i < routeSelect.options.length; i++) {
+                const optVal = routeSelect.options[i].value;
+                if (optVal && rawRoute.toLowerCase().includes(optVal.toLowerCase())) {
+                  routeSelect.selectedIndex = i;
+                  break;
+                }
+              }
+            }
+          }
+
+          // Auto-fill Indication / Medical Purpose
+          const indicationInput = document.getElementById('indicationInput');
+          if (indicationInput && selectedOption.dataset.indication) {
+            indicationInput.value = selectedOption.dataset.indication;
           }
 
           const maxDosage = selectedOption.dataset.maxDosage;
@@ -606,8 +638,14 @@
             maxDosage ? `Max CDSCO dosage: ${maxDosage} ${selectedOption.dataset.unit}` : '';
           
           updateWithdrawalInfo();
-        } else if (refBox) {
-          refBox.style.display = 'none';
+        } else {
+          if (refBox) {
+            refBox.style.display = 'none';
+          }
+          const indicationInput = document.getElementById('indicationInput');
+          if (indicationInput) {
+            indicationInput.value = '';
+          }
         }
       });
     } catch (error) {
@@ -622,7 +660,7 @@
     const selectedDrug = drugSelect.options[drugSelect.selectedIndex];
     
     if (treatmentDate && selectedDrug.value) {
-      const withdrawalDays = parseInt(selectedDrug.dataset.withdrawalDays);
+      const withdrawalDays = parseInt(selectedDrug.dataset.withdrawalDays) || 0;
       const treatment = new Date(treatmentDate);
       const withdrawalEnd = new Date(treatment);
       withdrawalEnd.setDate(withdrawalEnd.getDate() + withdrawalDays);
@@ -630,6 +668,19 @@
       document.getElementById('withdrawalDays').textContent = withdrawalDays;
       document.getElementById('withdrawalEndDate').textContent = withdrawalEnd.toLocaleDateString();
       document.getElementById('withdrawalInfo').style.display = 'block';
+
+      // Auto-calculate Expected Selling / Safe-to-Sell Date
+      const expInput = document.getElementById('expectedSellingDate');
+      if (expInput) {
+        const yyyy = withdrawalEnd.getFullYear();
+        const mm = String(withdrawalEnd.getMonth() + 1).padStart(2, '0');
+        const dd = String(withdrawalEnd.getDate()).padStart(2, '0');
+        expInput.value = `${yyyy}-${mm}-${dd}`;
+        expInput.readOnly = true;
+        expInput.style.background = '#eef2ff';
+        expInput.style.color = '#3730a3';
+        expInput.style.fontWeight = '600';
+      }
     } else {
       document.getElementById('withdrawalInfo').style.display = 'none';
     }
