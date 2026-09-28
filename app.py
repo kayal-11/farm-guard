@@ -1020,6 +1020,13 @@ def get_animals():
 @require_roles('farmer', 'vet', 'authority')
 def get_drugs():
     drugs = Drug.query.order_by(Drug.name.asc()).all()
+    unique_drugs = []
+    seen = set()
+    for d in drugs:
+        key = d.name.strip().lower()
+        if key not in seen:
+            seen.add(key)
+            unique_drugs.append(d)
     return jsonify([{
         'id': d.id,
         'name': d.name,
@@ -1033,7 +1040,7 @@ def get_drugs():
         'source': d.source or 'CDSCO (Central Drugs Standard Control Organisation, Govt of India)',
         'source_date': d.source_date or 'Current Approved List',
         'mrl_info': d.mrl_info or 'Codex/FSSAI MRL Compliant'
-    } for d in drugs])
+    } for d in unique_drugs])
 
 
 

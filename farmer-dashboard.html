@@ -566,7 +566,12 @@
       const select = document.getElementById('drugSelect');
       select.innerHTML = '<option value="">Select an official CDSCO drug...</option>';
       
+      const seenDrugs = new Set();
       drugs.forEach(drug => {
+        const dName = (drug.name || '').trim().toLowerCase();
+        if (seenDrugs.has(dName)) return;
+        seenDrugs.add(dName);
+
         const option = document.createElement('option');
         option.value = drug.id;
         option.textContent = `${drug.name} (${drug.active_ingredient}) — ${drug.withdrawal_period_days} days withdrawal`;
@@ -1030,7 +1035,12 @@
         const select = document.getElementById('drugSelect');
         select.innerHTML = '<option value="">Select a drug...</option>';
         
+        const seenDrugs2 = new Set();
         drugs.forEach(drug => {
+          const dName = (drug.name || '').trim().toLowerCase();
+          if (seenDrugs2.has(dName)) return;
+          seenDrugs2.add(dName);
+
           const option = document.createElement('option');
           option.value = drug.id;
           option.textContent = `${drug.name} (${drug.withdrawal_period_days} days withdrawal)`;
