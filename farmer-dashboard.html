@@ -282,9 +282,8 @@
           </div>
           
           <div>
-            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Expected Selling / Safe-to-Sell Date ⭐</label>
-            <input type="date" id="expectedSellingDate" readonly style="width: 100%; padding: 0.75rem; border: 1px solid #c7d2fe; border-radius: 4px; background: #eef2ff; color: #3730a3; font-weight: 600;" placeholder="Auto-calculated from withdrawal period">
-            <small style="display: block; margin-top: 0.25rem; color: #4338ca; font-size: 0.75rem;">Calculated automatically from treatment date and verified CDSCO withdrawal period (cannot be manually edited).</small>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Expected Selling Date</label>
+            <input type="date" id="expectedSellingDate" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px;">
           </div>
           
           <div id="withdrawalInfo" style="padding: 1rem; background: #e3f2fd; border-radius: 4px; display: none;">
@@ -668,19 +667,6 @@
       document.getElementById('withdrawalDays').textContent = withdrawalDays;
       document.getElementById('withdrawalEndDate').textContent = withdrawalEnd.toLocaleDateString();
       document.getElementById('withdrawalInfo').style.display = 'block';
-
-      // Auto-calculate Expected Selling / Safe-to-Sell Date
-      const expInput = document.getElementById('expectedSellingDate');
-      if (expInput) {
-        const yyyy = withdrawalEnd.getFullYear();
-        const mm = String(withdrawalEnd.getMonth() + 1).padStart(2, '0');
-        const dd = String(withdrawalEnd.getDate()).padStart(2, '0');
-        expInput.value = `${yyyy}-${mm}-${dd}`;
-        expInput.readOnly = true;
-        expInput.style.background = '#eef2ff';
-        expInput.style.color = '#3730a3';
-        expInput.style.fontWeight = '600';
-      }
     } else {
       document.getElementById('withdrawalInfo').style.display = 'none';
     }
