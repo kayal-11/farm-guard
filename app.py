@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, redirect, url_for, session, send_from_directory, send_file
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from flask_cors import CORS
@@ -12,6 +13,11 @@ from rag_engine import rag_engine_instance
 load_dotenv()
 app = Flask(__name__, static_folder='.', static_url_path='')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-here-change-this')
+
+# Secure Document Upload Folder
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads', 'verification_docs')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Database Configuration (Target DB: livestock)
 DB_USER = os.getenv('DB_USER', 'postgres')
@@ -55,16 +61,59 @@ class User(db.Model):
     role = db.Column(db.String(20), nullable=False)  # farmer, vet, authority
     phone = db.Column(db.String(20))
     email = db.Column(db.String(100))
+    status = db.Column(db.String(30), default='APPROVED')  # PENDING, APPROVED, REJECTED, CORRECTION_REQUESTED
+    address = db.Column(db.Text)
+    farm_name = db.Column(db.String(150))
+    cattle_count = db.Column(db.Integer, default=0)
+    buffalo_count = db.Column(db.Integer, default=0)
+    goat_count = db.Column(db.Integer, default=0)
+    sheep_count = db.Column(db.Integer, default=0)
+    poultry_count = db.Column(db.Integer, default=0)
+    other_livestock = db.Column(db.Text)
+    vet_reg_number = db.Column(db.String(100))
+    qualification = db.Column(db.String(150))
+    vet_council_details = db.Column(db.Text)
+    verification_doc_path = db.Column(db.String(255))
+    verification_doc_filename = db.Column(db.String(255))
+    rejection_reason = db.Column(db.Text)
+    correction_notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     amu_entries = db.relationship('AMUEntry', backref='farmer', lazy=True, foreign_keys='AMUEntry.farmer_id')
     audit_logs = db.relationship('AuditLog', backref='user', lazy=True)
     alerts = db.relationship('Alert', backref='user', lazy=True)
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'identifier': self.identifier,
+            'name': self.name,
+            'role': self.role,
+            'phone': self.phone or '',
+            'email': self.email or '',
+            'status': self.status or 'APPROVED',
+            'address': self.address or '',
+            'farm_name': self.farm_name or '',
+            'cattle_count': self.cattle_count or 0,
+            'buffalo_count': self.buffalo_count or 0,
+            'goat_count': self.goat_count or 0,
+            'sheep_count': self.sheep_count or 0,
+            'poultry_count': self.poultry_count or 0,
+            'other_livestock': self.other_livestock or '',
+            'vet_reg_number': self.vet_reg_number or '',
+            'qualification': self.qualification or '',
+            'vet_council_details': self.vet_council_details or '',
+            'verification_doc_filename': self.verification_doc_filename or '',
+            'has_verification_doc': bool(self.verification_doc_path),
+            'rejection_reason': self.rejection_reason or '',
+            'correction_notes': self.correction_notes or '',
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
 
 class Animal(db.Model):
     __tablename__ = 'animals'
     id = db.Column(db.Integer, primary_key=True)
-    tag_number = db.Column(db.String(50), unique=True, nullable=False)
+    tag_number = db.Column(db.String(50), nullable=False)
     species = db.Column(db.String(50), nullable=False)
     farmer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -164,6 +213,19 @@ def require_roles(*allowed_roles):
             user_role = session.get('role')
             if allowed_roles and user_role not in allowed_roles:
                 return jsonify({'error': 'Forbidden', 'message': f'Role "{user_role}" is not authorized to access this resource'}), 403
+
+            # Enforce approval status on the BACKEND for non-authority users
+            if user_role != 'authority':
+                user = db.session.get(User, session['user_id'])
+                if not user or user.status != 'APPROVED':
+                    status = user.status if user else 'PENDING'
+                    if user and status == 'REJECTED':
+                        msg = f"Your registration was rejected by Authority. Reason: {user.rejection_reason or 'Not specified'}"
+                    elif user and status == 'CORRECTION_REQUESTED':
+                        msg = f"Authority requested corrections: {user.correction_notes or 'Please update your details'}"
+                    else:
+                        msg = "Your registration is pending Authority verification."
+                    return jsonify({'error': 'Forbidden', 'message': msg, 'status': status}), 403
             
             return f(*args, **kwargs)
         return decorated_function
@@ -183,21 +245,52 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        data = request.get_json()
-        identifier = data.get('identifier')
-        password = data.get('password')
-        role = data.get('role')
+        data = request.get_json() or {}
+        identifier = (data.get('identifier') or '').strip()
+        password = data.get('password') or ''
+        role = (data.get('role') or 'farmer').lower()
 
-        user = User.query.filter_by(identifier=identifier, role=role).first()
+        user = User.query.filter(
+            ((User.identifier == identifier) | (User.email == identifier) | (User.phone == identifier)),
+            User.role == role
+        ).first()
 
         if not user:
             return jsonify({
                 'success': False,
-                'message': f'User with identifier "{identifier}" and role "{role}" not found. Available test users: FARM001, VET001, AUTH001'
+                'message': f'User with identifier/email/phone "{identifier}" and role "{role}" not found.'
             }), 401
 
         if not check_password_hash(user.password_hash, password):
-            return jsonify({'success': False, 'message': 'Invalid password. Default password is: password123'}), 401
+            return jsonify({'success': False, 'message': 'Invalid password. Please check your credentials.'}), 401
+
+        # Check account approval status BEFORE allowing sign-in
+        user_status = user.status or 'APPROVED'
+        if user_status == 'PENDING':
+            return jsonify({
+                'success': False,
+                'status': 'PENDING',
+                'message': 'Your registration is pending Authority verification.'
+            }), 403
+        elif user_status == 'REJECTED':
+            return jsonify({
+                'success': False,
+                'status': 'REJECTED',
+                'message': f'Your registration was rejected by Authority. Reason: {user.rejection_reason or "Not specified"}'
+            }), 403
+        elif user_status == 'CORRECTION_REQUESTED':
+            return jsonify({
+                'success': False,
+                'status': 'CORRECTION_REQUESTED',
+                'message': f'Authority requested corrections: {user.correction_notes or "Please update your details."}',
+                'user': user.to_dict()
+            }), 403
+        elif user_status != 'APPROVED':
+            return jsonify({
+                'success': False,
+                'status': user_status,
+                'message': 'Your account is not authorized to sign in.'
+            }), 403
 
         session['user_id'] = user.id
         session['role'] = user.role
@@ -212,9 +305,406 @@ def login():
         db.session.add(log)
         db.session.commit()
 
-        return jsonify({'success': True, 'role': user.role})
+        return jsonify({
+            'success': True,
+            'role': user.role,
+            'message': 'Your account has been approved. You can now access your dashboard.'
+        })
 
     return send_from_directory('.', 'login.html')
+
+
+@app.route('/api/check-status', methods=['GET', 'POST'])
+def check_status():
+    if request.method == 'POST':
+        data = request.get_json() or request.form.to_dict() or {}
+        identifier = (data.get('identifier') or data.get('query') or data.get('email') or data.get('phone') or '').strip()
+        role = (data.get('role') or '').lower().strip()
+    else:
+        identifier = (request.args.get('identifier') or request.args.get('query') or request.args.get('email') or request.args.get('phone') or '').strip()
+        role = (request.args.get('role') or '').lower().strip()
+
+    if not identifier:
+        return jsonify({'success': False, 'message': 'Please enter your registered email address or phone number.'}), 400
+
+    query = User.query.filter(
+        (User.identifier == identifier) | (User.email == identifier) | (User.phone == identifier)
+    )
+    if role in ['farmer', 'vet', 'authority']:
+        query = query.filter(User.role == role)
+
+    user = query.first()
+    if not user:
+        return jsonify({'success': False, 'message': f'No registered account found matching "{identifier}".'}), 404
+
+    status = user.status or 'APPROVED'
+    if status == 'APPROVED':
+        msg = 'Your account has been approved. You can now access your dashboard.'
+    elif status == 'PENDING':
+        msg = 'Your registration is pending Authority verification.'
+    elif status == 'REJECTED':
+        msg = f'Your registration was rejected by Authority. Reason: {user.rejection_reason or "Not specified"}'
+    elif status == 'CORRECTION_REQUESTED':
+        msg = f'Authority requested corrections: {user.correction_notes or "Please update your details."}'
+    else:
+        msg = f'Account status: {status}'
+
+    return jsonify({
+        'success': True,
+        'status': status,
+        'user_id': user.id,
+        'name': user.name,
+        'role': user.role,
+        'email': user.email or '',
+        'phone': user.phone or '',
+        'rejection_reason': user.rejection_reason or '',
+        'correction_notes': user.correction_notes or '',
+        'message': msg
+    })
+
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        try:
+            if request.is_json:
+                data = request.get_json() or {}
+            else:
+                data = request.form.to_dict() or {}
+
+            role = (data.get('role') or 'farmer').lower()
+            name = (data.get('name') or '').strip()
+            phone = (data.get('phone') or '').strip()
+            email = (data.get('email') or '').strip()
+            password = data.get('password') or ''
+            address = (data.get('address') or '').strip()
+            accepted_terms = data.get('accepted_terms') in [True, 'true', 'on', '1', 1]
+
+            if not name or not phone or not email or not password or not address:
+                return jsonify({'success': False, 'message': 'All required fields (Name, Phone, Email, Password, Address) must be filled.'}), 400
+
+            if not accepted_terms:
+                return jsonify({'success': False, 'message': 'You must accept the terms and conditions.'}), 400
+
+            if role == 'vet':
+                vet_reg_number = (data.get('vet_reg_number') or '').strip()
+                qualification = (data.get('qualification') or '').strip()
+                vet_council_details = (data.get('vet_council_details') or '').strip()
+                if not vet_reg_number or not qualification or not vet_council_details:
+                    return jsonify({'success': False, 'message': 'Please fill all veterinarian registration details.'}), 400
+                identifier = vet_reg_number
+            else:
+                farm_name = (data.get('farm_name') or '').strip()
+                if not farm_name:
+                    return jsonify({'success': False, 'message': 'Please enter your Farm Name.'}), 400
+                identifier = email or phone
+
+            # Check if identifier, email, or phone already exists
+            existing_user = User.query.filter(
+                (User.identifier == identifier) | (User.email == email) | ((User.phone == phone) & (User.phone != ''))
+            ).first()
+
+            if existing_user:
+                if existing_user.status == 'CORRECTION_REQUESTED':
+                    return jsonify({
+                        'success': False,
+                        'status': 'CORRECTION_REQUESTED',
+                        'message': 'An account with this email/phone exists and has pending corrections requested. Please log in to resubmit your details.'
+                    }), 400
+                return jsonify({'success': False, 'message': 'An account with this email, phone, or license number already exists.'}), 400
+
+            # File Upload validation & saving
+            saved_doc_path = None
+            orig_doc_name = None
+            if 'verification_doc' in request.files:
+                file = request.files['verification_doc']
+                if file and file.filename != '':
+                    orig_doc_name = secure_filename(file.filename)
+                    ext = os.path.splitext(orig_doc_name)[1].lower()
+                    if ext in ['.pdf', '.png', '.jpg', '.jpeg', '.doc', '.docx']:
+                        saved_doc_path = f"doc_{datetime.now().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex[:6]}{ext}"
+                        file.save(os.path.join(app.config['UPLOAD_FOLDER'], saved_doc_path))
+                    else:
+                        return jsonify({'success': False, 'message': 'Invalid document format. Allowed: PDF, PNG, JPG, JPEG, DOC, DOCX.'}), 400
+
+            if not saved_doc_path:
+                return jsonify({'success': False, 'message': 'Valid verification document file upload is required.'}), 400
+
+            # Create user with status = PENDING
+            new_user = User(
+                identifier=identifier,
+                password_hash=generate_password_hash(password),
+                name=name,
+                role=role,
+                phone=phone,
+                email=email,
+                status='PENDING',
+                address=address,
+                verification_doc_path=saved_doc_path,
+                verification_doc_filename=orig_doc_name
+            )
+
+            if role == 'farmer':
+                new_user.farm_name = (data.get('farm_name') or '').strip()
+                new_user.cattle_count = int(data.get('cattle_count', 0) or 0)
+                new_user.buffalo_count = int(data.get('buffalo_count', 0) or 0)
+                new_user.goat_count = int(data.get('goat_count', 0) or 0)
+                new_user.sheep_count = int(data.get('sheep_count', 0) or 0)
+                new_user.poultry_count = int(data.get('poultry_count', 0) or 0)
+                new_user.other_livestock = (data.get('other_livestock') or '').strip()
+            elif role == 'vet':
+                new_user.vet_reg_number = (data.get('vet_reg_number') or '').strip()
+                new_user.qualification = (data.get('qualification') or '').strip()
+                new_user.vet_council_details = (data.get('vet_council_details') or '').strip()
+
+            db.session.add(new_user)
+            db.session.commit()
+
+            # Audit log entry
+            log = AuditLog(
+                log_id=f"LOG-{datetime.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:4].upper()}",
+                user_id=new_user.id,
+                action='signup',
+                description=f"New {role.upper()} registration submitted by {name} ({email})"
+            )
+            db.session.add(log)
+            db.session.commit()
+
+            return jsonify({
+                'success': True,
+                'status': 'PENDING',
+                'message': 'Your registration is pending Authority verification.',
+                'user_id': new_user.id
+            })
+
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'message': f'Registration failed: {str(e)}'}), 500
+
+    return send_from_directory('.', 'signup.html')
+
+
+@app.route('/api/user/resubmit', methods=['POST'])
+def user_resubmit():
+    try:
+        data = request.form.to_dict() if not request.is_json else (request.get_json() or {})
+        user_id = data.get('user_id') or session.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'message': 'User ID is required for resubmission.'}), 400
+
+        user = db.session.get(User, int(user_id))
+        if not user:
+            return jsonify({'success': False, 'message': 'User account not found.'}), 404
+
+        if user.status not in ['CORRECTION_REQUESTED', 'PENDING', 'REJECTED']:
+            return jsonify({'success': False, 'message': f'User status "{user.status}" does not allow resubmission.'}), 400
+
+        if data.get('name'): user.name = data.get('name').strip()
+        if data.get('phone'): user.phone = data.get('phone').strip()
+        if data.get('email'): user.email = data.get('email').strip()
+        if data.get('address'): user.address = data.get('address').strip()
+
+        if user.role == 'farmer':
+            if data.get('farm_name'): user.farm_name = data.get('farm_name').strip()
+            if 'cattle_count' in data: user.cattle_count = int(data.get('cattle_count') or 0)
+            if 'buffalo_count' in data: user.buffalo_count = int(data.get('buffalo_count') or 0)
+            if 'goat_count' in data: user.goat_count = int(data.get('goat_count') or 0)
+            if 'sheep_count' in data: user.sheep_count = int(data.get('sheep_count') or 0)
+            if 'poultry_count' in data: user.poultry_count = int(data.get('poultry_count') or 0)
+            if 'other_livestock' in data: user.other_livestock = (data.get('other_livestock') or '').strip()
+        elif user.role == 'vet':
+            if data.get('vet_reg_number'): user.vet_reg_number = data.get('vet_reg_number').strip()
+            if data.get('qualification'): user.qualification = data.get('qualification').strip()
+            if data.get('vet_council_details'): user.vet_council_details = data.get('vet_council_details').strip()
+
+        if 'verification_doc' in request.files:
+            file = request.files['verification_doc']
+            if file and file.filename != '':
+                orig_doc_name = secure_filename(file.filename)
+                ext = os.path.splitext(orig_doc_name)[1].lower()
+                if ext in ['.pdf', '.png', '.jpg', '.jpeg', '.doc', '.docx']:
+                    saved_doc_path = f"doc_{datetime.now().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex[:6]}{ext}"
+                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], saved_doc_path))
+                    user.verification_doc_path = saved_doc_path
+                    user.verification_doc_filename = orig_doc_name
+
+        user.status = 'PENDING'
+        user.correction_notes = None
+        user.rejection_reason = None
+        db.session.commit()
+
+        log = AuditLog(
+            log_id=f"LOG-{datetime.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:4].upper()}",
+            user_id=user.id,
+            action='resubmit',
+            description=f"{user.name} updated and resubmitted registration details for verification"
+        )
+        db.session.add(log)
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'status': 'PENDING',
+            'message': 'Your registration is pending Authority verification.'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/authority/pending-registrations', methods=['GET'])
+@require_roles('authority')
+def get_pending_registrations():
+    status_filter = request.args.get('status')
+    if status_filter:
+        users = User.query.filter(User.status == status_filter.upper()).order_by(User.created_at.desc()).all()
+    else:
+        users = User.query.filter(User.status.in_(['PENDING', 'CORRECTION_REQUESTED', 'REJECTED'])).order_by(User.created_at.desc()).all()
+
+    return jsonify([u.to_dict() for u in users])
+
+
+@app.route('/api/authority/user-details/<int:user_id>', methods=['GET'])
+@require_roles('authority')
+def get_user_details(user_id):
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    return jsonify(user.to_dict())
+
+
+def generate_farmer_animals(user):
+    if not user or user.role != 'farmer':
+        return
+
+    species_config = [
+        (user.cattle_count or 0, 'CATTLE', 'cattle'),
+        (user.buffalo_count or 0, 'BUFFALO', 'buffalo'),
+        (user.goat_count or 0, 'GOAT', 'goat'),
+        (user.sheep_count or 0, 'SHEEP', 'sheep'),
+        (user.poultry_count or 0, 'HEN', 'poultry'),
+    ]
+
+    if user.other_livestock and user.other_livestock.strip():
+        import re
+        numbers = re.findall(r'\d+', user.other_livestock)
+        other_cnt = int(numbers[0]) if numbers else 1
+        species_config.append((other_cnt, 'OTHER', 'other'))
+
+    existing_animals = Animal.query.filter_by(farmer_id=user.id).all()
+    existing_tags = {a.tag_number for a in existing_animals}
+
+    new_animals = []
+    for count, prefix, species in species_config:
+        if count <= 0:
+            continue
+        for i in range(1, count + 1):
+            tag = f"{prefix}-{i:03d}"
+            if tag not in existing_tags:
+                new_animals.append(Animal(
+                    tag_number=tag,
+                    species=species,
+                    farmer_id=user.id
+                ))
+                existing_tags.add(tag)
+
+    if new_animals:
+        try:
+            db.session.add_all(new_animals)
+            db.session.commit()
+        except Exception as err:
+            db.session.rollback()
+            print(f"[NOTE] Animal generation notice: {err}")
+
+
+@app.route('/api/authority/verify-user/<int:user_id>', methods=['POST'])
+@require_roles('authority')
+def verify_user(user_id):
+    data = request.get_json() or {}
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    action = (data.get('action') or '').lower()
+    reason = (data.get('reason') or data.get('notes') or '').strip()
+
+    if action == 'approve':
+        user.status = 'APPROVED'
+        user.rejection_reason = None
+        user.correction_notes = None
+        if user.role == 'farmer':
+            generate_farmer_animals(user)
+        msg = f"Approved registration for {user.name} ({user.role})"
+        alert_title = "Registration Approved!"
+        alert_msg = "Your FarmGuard account registration has been approved by the Authority. You can now log in and access your portal."
+        priority = 'normal'
+
+    elif action == 'reject':
+        if not reason:
+            return jsonify({'error': 'Rejection reason is required'}), 400
+        user.status = 'REJECTED'
+        user.rejection_reason = reason
+        msg = f"Rejected registration for {user.name} ({user.role}). Reason: {reason}"
+        alert_title = "Registration Rejected"
+        alert_msg = f"Your FarmGuard account registration was rejected by Authority. Reason: {reason}"
+        priority = 'high'
+
+    elif action in ['request_correction', 'correction']:
+        if not reason:
+            return jsonify({'error': 'Correction notes are required'}), 400
+        user.status = 'CORRECTION_REQUESTED'
+        user.correction_notes = reason
+        msg = f"Requested correction for {user.name} ({user.role}). Instructions: {reason}"
+        alert_title = "Action Required: Registration Correction Needed"
+        alert_msg = f"Authority requested corrections for your registration: {reason}. Please log in to update and resubmit your details."
+        priority = 'high'
+    else:
+        return jsonify({'error': f'Invalid action "{action}". Expected "approve", "reject", or "request_correction".'}), 400
+
+    db.session.commit()
+
+    log = AuditLog(
+        log_id=f"LOG-{datetime.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:4].upper()}",
+        user_id=session['user_id'],
+        action=f"user_{action}",
+        description=msg
+    )
+    db.session.add(log)
+
+    alert = Alert(
+        user_id=user.id,
+        alert_type='notification',
+        title=alert_title,
+        message=alert_msg,
+        priority=priority
+    )
+    db.session.add(alert)
+    db.session.commit()
+
+    return jsonify({'success': True, 'status': user.status, 'message': f'User status updated to {user.status}'})
+
+
+@app.route('/api/verification-document/<int:user_id>')
+def view_verification_document(user_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized', 'message': 'Authentication required'}), 401
+
+    current_user_id = session.get('user_id')
+    current_role = session.get('role')
+
+    if current_role != 'authority' and current_user_id != user_id:
+        return jsonify({'error': 'Forbidden', 'message': 'Access to verification document denied'}), 403
+
+    user = db.session.get(User, user_id)
+    if not user or not user.verification_doc_path:
+        return jsonify({'error': 'Not Found', 'message': 'No verification document uploaded for this user'}), 404
+
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], user.verification_doc_path)
+    if not os.path.exists(file_path):
+        return jsonify({'error': 'Not Found', 'message': 'Verification document file does not exist on server'}), 404
+
+    return send_file(file_path, download_name=user.verification_doc_filename or user.verification_doc_path)
 
 
 @app.route('/logout')
@@ -241,6 +731,10 @@ def logout():
 def farmer_dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
+    user = db.session.get(User, session['user_id'])
+    if not user or (user.status and user.status != 'APPROVED'):
+        session.clear()
+        return redirect(url_for('login'))
     role = session.get('role')
     if role == 'vet':
         return redirect(url_for('vet_dashboard'))
@@ -254,6 +748,10 @@ def farmer_dashboard():
 @app.route('/vet-dashboard')
 def vet_dashboard():
     if 'user_id' not in session:
+        return redirect(url_for('login'))
+    user = db.session.get(User, session['user_id'])
+    if not user or (user.status and user.status != 'APPROVED'):
+        session.clear()
         return redirect(url_for('login'))
     role = session.get('role')
     if role == 'farmer':
@@ -1005,9 +1503,14 @@ def get_animals():
             return jsonify({'error': str(e)}), 400
 
     if session.get('role') == 'farmer':
-        animals = Animal.query.filter_by(farmer_id=session['user_id']).all()
+        user = db.session.get(User, session['user_id'])
+        if user:
+            existing_count = Animal.query.filter_by(farmer_id=user.id).count()
+            if existing_count == 0 and (user.cattle_count or user.buffalo_count or user.goat_count or user.sheep_count or user.poultry_count or user.other_livestock):
+                generate_farmer_animals(user)
+        animals = Animal.query.filter_by(farmer_id=session['user_id']).order_by(Animal.id.asc()).all()
     else:
-        animals = Animal.query.all()
+        animals = Animal.query.order_by(Animal.id.asc()).all()
 
     return jsonify([{
         'id': a.id,
@@ -1679,7 +2182,24 @@ def init_db():
                 "ALTER TABLE amu_entries ADD COLUMN route VARCHAR(100)",
                 "ALTER TABLE amu_entries ADD COLUMN indication TEXT",
                 "ALTER TABLE rag_evidences ADD COLUMN verification_status VARCHAR(50)",
-                "ALTER TABLE rag_evidences ADD COLUMN verification_details TEXT"
+                "ALTER TABLE rag_evidences ADD COLUMN verification_details TEXT",
+                "ALTER TABLE users ADD COLUMN status VARCHAR(30) DEFAULT 'APPROVED'",
+                "ALTER TABLE users ADD COLUMN address TEXT",
+                "ALTER TABLE users ADD COLUMN farm_name VARCHAR(150)",
+                "ALTER TABLE users ADD COLUMN cattle_count INTEGER DEFAULT 0",
+                "ALTER TABLE users ADD COLUMN buffalo_count INTEGER DEFAULT 0",
+                "ALTER TABLE users ADD COLUMN goat_count INTEGER DEFAULT 0",
+                "ALTER TABLE users ADD COLUMN sheep_count INTEGER DEFAULT 0",
+                "ALTER TABLE users ADD COLUMN poultry_count INTEGER DEFAULT 0",
+                "ALTER TABLE users ADD COLUMN other_livestock TEXT",
+                "ALTER TABLE users ADD COLUMN vet_reg_number VARCHAR(100)",
+                "ALTER TABLE users ADD COLUMN qualification VARCHAR(150)",
+                "ALTER TABLE users ADD COLUMN vet_council_details TEXT",
+                "ALTER TABLE users ADD COLUMN verification_doc_path VARCHAR(255)",
+                "ALTER TABLE users ADD COLUMN verification_doc_filename VARCHAR(255)",
+                "ALTER TABLE users ADD COLUMN rejection_reason TEXT",
+                "ALTER TABLE users ADD COLUMN correction_notes TEXT",
+                "ALTER TABLE animals DROP CONSTRAINT IF EXISTS animals_tag_number_key"
             ]
             for cmd in alter_commands:
                 try:
@@ -1687,6 +2207,12 @@ def init_db():
                     db.session.commit()
                 except Exception:
                     db.session.rollback()
+
+            try:
+                db.session.execute(db.text("UPDATE users SET status = 'APPROVED' WHERE status IS NULL"))
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
 
             # Ensure official CDSCO drugs exist and are populated with full metadata
             cdsco_catalog = [

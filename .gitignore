@@ -5,7 +5,7 @@
 *.pem
 *.key
 *.cert
-
+uploads/verification_docs/
 # Python & Virtual Environments
 __pycache__/
 *.py[cod]

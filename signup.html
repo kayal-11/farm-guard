@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up - FarmGuard</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .signup-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1rem;
+      background: radial-gradient(circle at top right, rgba(46, 125, 50, 0.08), transparent 50%),
+                  radial-gradient(circle at bottom left, rgba(230, 161, 0, 0.06), transparent 50%),
+                  var(--background);
+    }
+    .signup-container {
+      width: 100%;
+      max-width: 760px;
+    }
+    .signup-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      padding: 2.5rem;
+    }
+    .livestock-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+      background: rgba(46, 125, 50, 0.03);
+      padding: 1.25rem;
+      border-radius: var(--radius);
+      border: 1px dashed var(--border);
+      margin-bottom: 1.25rem;
+    }
+    .livestock-grid .form-group {
+      margin-bottom: 0;
+    }
+    .form-section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin: 1.5rem 0 0.75rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 0.4rem;
+    }
+    .file-upload-box {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      text-align: center;
+      background: var(--accent);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .file-upload-box:hover {
+      border-color: var(--primary);
+      background: rgba(46, 125, 50, 0.08);
+    }
+    .file-upload-box input[type="file"] {
+      display: none;
+    }
+    .file-upload-label {
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--foreground);
+    }
+    .selected-file-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-top: 0.5rem;
+      word-break: break-all;
+    }
+    .status-card {
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .status-icon {
+      font-size: 3.5rem;
+      margin-bottom: 1rem;
+    }
+    .correction-banner {
+      background: #fff8e1;
+      border-left: 4px solid var(--warning);
+      padding: 1rem 1.25rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1.5rem;
+      color: #7f5f00;
+    }
+  </style>
+</head>
+<body>
+  <div class="signup-page">
+    <div class="signup-container">
+      
+      <!-- Logo & Header -->
+      <div class="login-header" style="text-align: center; margin-bottom: 1.5rem;">
+        <a href="index.html" class="logo" style="justify-content: center;">
+          <div class="logo-icon">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L4 5V10C4 15 7.5 19.5 12 22C16.5 19.5 20 15 20 10V5L12 2Z"/>
+            </svg>
+          </div>
+          <span>FarmGuard</span>
+        </a>
+        <h1 style="margin-top: 1rem; font-size: 1.75rem;">Create Your Account</h1>
+        <p style="color: var(--muted-foreground);">Register as a Farmer or Veterinarian to start managing livestock health & compliance</p>
+      </div>
+
+      <div class="signup-card">
+        <!-- Correction Request Banner (If resubmitting) -->
+        <div id="correctionBanner" class="correction-banner" style="display: none;">
+          <strong>⚠️ Action Required from Authority:</strong>
+          <p id="correctionNotesText" style="margin-top: 0.25rem;"></p>
+        </div>
+
+        <!-- Role Selector -->
+        <div class="role-tabs" style="margin-bottom: 2rem;">
+          <button type="button" class="role-tab active" id="tabFarmer" onclick="switchRole('farmer')">
+            👨‍🌾 Farmer Sign Up
+          </button>
+          <button type="button" class="role-tab" id="tabVet" onclick="switchRole('vet')">
+            👨‍⚕️ Veterinarian Sign Up
+          </button>
+        </div>
+
+        <!-- Signup Form -->
+        <form id="signupForm" enctype="multipart/form-data">
+          <input type="hidden" id="roleInput" name="role" value="farmer">
+          <input type="hidden" id="userIdInput" name="user_id" value="">
+
+          <!-- Common Details -->
+          <div class="form-section-title">👤 Account & Personal Information</div>
+          
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label for="name">Full Name *</label>
+              <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+            </div>
+            <div class="form-group">
+              <label for="phone">Phone Number *</label>
+              <input type="tel" id="phone" name="phone" placeholder="e.g. 9876543210" required>
+            </div>
+          </div>
+
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label for="email">Email Address *</label>
+              <input type="email" id="email" name="email" placeholder="e.g. name@example.com" required>
+            </div>
+            <div class="form-group">
+              <label for="password">Password *</label>
+              <input type="password" id="password" name="password" placeholder="Create a strong password" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="address">Full Address / Location *</label>
+            <input type="text" id="address" name="address" placeholder="Enter full postal address or farm location" required>
+          </div>
+
+          <!-- Farmer Specific Details -->
+          <div id="farmerFields">
+            <div class="form-section-title">🌾 Farm & Livestock Details</div>
+            
+            <div class="form-group">
+              <label for="farm_name">Farm Name *</label>
+              <input type="text" id="farm_name" name="farm_name" placeholder="e.g. Green Valley Dairy Farm">
+            </div>
+
+            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.875rem;">Livestock Breakdown (Head Count):</label>
+            <div class="livestock-grid">
+              <div class="form-group">
+                <label for="cattle_count" style="font-size: 0.8rem;">🐄 Cattle</label>
+                <input type="number" id="cattle_count" name="cattle_count" min="0" value="0">
+              </div>
+              <div class="form-group">
+                <label for="buffalo_count" style="font-size: 0.8rem;">🦬 Buffalo</label>
+                <input type="number" id="buffalo_count" name="buffalo_count" min="0" value="0">
+              </div>
+              <div class="form-group">
+                <label for="goat_count" style="font-size: 0.8rem;">🐐 Goat</label>
+                <input type="number" id="goat_count" name="goat_count" min="0" value="0">
+              </div>
+              <div class="form-group">
+                <label for="sheep_count" style="font-size: 0.8rem;">🐑 Sheep</label>
+                <input type="number" id="sheep_count" name="sheep_count" min="0" value="0">
+              </div>
+              <div class="form-group">
+                <label for="poultry_count" style="font-size: 0.8rem;">🐔 Poultry/Hen</label>
+                <input type="number" id="poultry_count" name="poultry_count" min="0" value="0">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="other_livestock">Other Livestock (Optional)</label>
+              <input type="text" id="other_livestock" name="other_livestock" placeholder="Specify species & counts (e.g. 5 Pigs, 2 Horses)">
+            </div>
+          </div>
+
+          <!-- Vet Specific Details -->
+          <div id="vetFields" style="display: none;">
+            <div class="form-section-title">🩺 Professional Credentials</div>
+
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div class="form-group">
+                <label for="vet_reg_number">Veterinary Registration Number *</label>
+                <input type="text" id="vet_reg_number" name="vet_reg_number" placeholder="e.g. VET-REG-2026-897">
+              </div>
+              <div class="form-group">
+                <label for="qualification">Qualification *</label>
+                <input type="text" id="qualification" name="qualification" placeholder="e.g. B.V.Sc & A.H / M.V.Sc">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="vet_council_details">Veterinary Council / Registration Body Details *</label>
+              <input type="text" id="vet_council_details" name="vet_council_details" placeholder="e.g. State Veterinary Council of Tamil Nadu">
+            </div>
+          </div>
+
+          <!-- Document Upload -->
+          <div class="form-section-title">📄 Verification Document Upload</div>
+          <p style="font-size: 0.85rem; color: var(--muted-foreground); margin-bottom: 0.75rem;" id="docHelperText">
+            Please upload a valid farmer registration / land proof / farm license document. (Formats: PDF, PNG, JPG, JPEG, DOC, DOCX)
+          </p>
+
+          <div class="file-upload-box" onclick="document.getElementById('verification_doc').click()">
+            <input type="file" id="verification_doc" name="verification_doc" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" onchange="handleFileSelected(this)">
+            <label class="file-upload-label">
+              <span style="font-size: 2rem;">📤</span>
+              <span style="font-weight: 600;">Click to upload verification document</span>
+              <span style="font-size: 0.8rem; color: var(--muted-foreground);">Maximum file size: 10MB</span>
+            </label>
+            <div id="selectedFileName" class="selected-file-name"></div>
+          </div>
+
+          <!-- Terms & Submit -->
+          <div style="margin-top: 1.5rem;">
+            <label class="checkbox-group" style="align-items: flex-start;">
+              <input type="checkbox" id="accepted_terms" name="accepted_terms" required style="margin-top: 0.25rem;">
+              <span style="font-size: 0.875rem;">I declare that all information provided is accurate and agree to the <a href="#" style="color: var(--primary); text-decoration: underline;">Terms of Service & Regulatory Compliance Guidelines</a>.</span>
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" style="width: 100%; margin-top: 1.5rem;">
+            Submit Application for Verification
+          </button>
+        </form>
+
+        <!-- Status Confirmation View (Hidden by default) -->
+        <div id="statusCard" class="status-card" style="display: none;">
+          <div class="status-icon">⏳</div>
+          <div class="badge badge-warning" style="font-size: 0.9rem; padding: 0.4rem 1rem; margin-bottom: 1rem;">STATUS: PENDING VERIFICATION</div>
+          <h2 style="font-size: 1.5rem; color: var(--foreground); margin-bottom: 0.75rem;">
+            Your registration is pending Authority verification.
+          </h2>
+          <p style="color: var(--muted-foreground); max-width: 540px; margin: 0 auto 1.5rem auto; font-size: 0.95rem;">
+            Thank you for registering with FarmGuard. Your application details and verification document have been securely submitted to the Regulatory Authority for review.
+          </p>
+          <div style="background: rgba(46, 125, 50, 0.05); border: 1px solid var(--border); padding: 1rem; border-radius: var(--radius); max-width: 500px; margin: 0 auto 2rem auto; text-align: left; font-size: 0.875rem;">
+            <div><strong>● Submitted Role:</strong> <span id="confRole">-</span></div>
+            <div><strong>● Applicant Name:</strong> <span id="confName">-</span></div>
+            <div><strong>● Email:</strong> <span id="confEmail">-</span></div>
+            <div><strong>● Verification Document:</strong> <span id="confDoc">-</span></div>
+          </div>
+          <div style="display: flex; gap: 1rem; justify-content: center;">
+            <a href="login.html" class="btn btn-primary">Go to Login</a>
+            <a href="index.html" class="btn btn-outline">Return to Home</a>
+          </div>
+        </div>
+
+        <div class="login-footer" style="margin-top: 1.5rem; text-align: center;">
+          <p>Already have an account? <a href="login.html" style="font-weight: 600; color: var(--primary);">Sign In here</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentRole = 'farmer';
+    let isResubmitMode = false;
+
+    function switchRole(role) {
+      currentRole = role;
+      document.getElementById('roleInput').value = role;
+
+      document.getElementById('tabFarmer').classList.toggle('active', role === 'farmer');
+      document.getElementById('tabVet').classList.toggle('active', role === 'vet');
+
+      const farmerFields = document.getElementById('farmerFields');
+      const vetFields = document.getElementById('vetFields');
+      const docHelperText = document.getElementById('docHelperText');
+      const farmNameInput = document.getElementById('farm_name');
+      const vetRegInput = document.getElementById('vet_reg_number');
+      const qualificationInput = document.getElementById('qualification');
+      const vetCouncilInput = document.getElementById('vet_council_details');
+
+      if (role === 'farmer') {
+        farmerFields.style.display = 'block';
+        vetFields.style.display = 'none';
+        farmNameInput.setAttribute('required', 'required');
+        vetRegInput.removeAttribute('required');
+        qualificationInput.removeAttribute('required');
+        vetCouncilInput.removeAttribute('required');
+        docHelperText.textContent = 'Please upload a valid farmer registration / land proof / farm license document. (PDF, PNG, JPG, JPEG, DOC)';
+      } else {
+        farmerFields.style.display = 'none';
+        vetFields.style.display = 'block';
+        farmNameInput.removeAttribute('required');
+        vetRegInput.setAttribute('required', 'required');
+        qualificationInput.setAttribute('required', 'required');
+        vetCouncilInput.setAttribute('required', 'required');
+        docHelperText.textContent = 'Please upload valid veterinary registration / degree certificate proof. (PDF, PNG, JPG, JPEG, DOC)';
+      }
+    }
+
+    function handleFileSelected(input) {
+      const display = document.getElementById('selectedFileName');
+      if (input.files && input.files[0]) {
+        display.textContent = '📎 Selected file: ' + input.files[0].name;
+      } else {
+        display.textContent = '';
+      }
+    }
+
+    // Check for URL parameters (resubmit or pre-fill)
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const resubmit = urlParams.get('resubmit');
+      const userId = urlParams.get('user_id');
+
+      if (resubmit && userId) {
+        isResubmitMode = true;
+        document.getElementById('userIdInput').value = userId;
+        fetchUserDetails(userId);
+      }
+    });
+
+    async function fetchUserDetails(userId) {
+      try {
+        const response = await fetch(`/api/authority/user-details/${userId}`);
+        if (response.ok) {
+          const user = await response.json();
+          document.getElementById('name').value = user.name || '';
+          document.getElementById('phone').value = user.phone || '';
+          document.getElementById('email').value = user.email || '';
+          document.getElementById('address').value = user.address || '';
+          
+          if (user.role) {
+            switchRole(user.role);
+          }
+
+          if (user.role === 'farmer') {
+            document.getElementById('farm_name').value = user.farm_name || '';
+            document.getElementById('cattle_count').value = user.cattle_count || 0;
+            document.getElementById('buffalo_count').value = user.buffalo_count || 0;
+            document.getElementById('goat_count').value = user.goat_count || 0;
+            document.getElementById('sheep_count').value = user.sheep_count || 0;
+            document.getElementById('poultry_count').value = user.poultry_count || 0;
+            document.getElementById('other_livestock').value = user.other_livestock || '';
+          } else {
+            document.getElementById('vet_reg_number').value = user.vet_reg_number || '';
+            document.getElementById('qualification').value = user.qualification || '';
+            document.getElementById('vet_council_details').value = user.vet_council_details || '';
+          }
+
+          if (user.status === 'CORRECTION_REQUESTED' && user.correction_notes) {
+            const banner = document.getElementById('correctionBanner');
+            banner.style.display = 'block';
+            document.getElementById('correctionNotesText').textContent = user.correction_notes;
+          }
+
+          document.getElementById('password').removeAttribute('required');
+          document.getElementById('password').placeholder = 'Leave blank to keep existing password';
+          document.getElementById('verification_doc').removeAttribute('required');
+
+          if (user.verification_doc_filename) {
+            document.getElementById('selectedFileName').textContent = '📄 Existing File: ' + user.verification_doc_filename + ' (Upload new file to replace)';
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching user details:', err);
+      }
+    }
+
+    document.getElementById('signupForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting Application...';
+
+      const formData = new FormData(this);
+      const endpoint = isResubmitMode ? '/api/user/resubmit' : '/signup';
+
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          document.getElementById('signupForm').style.display = 'none';
+          document.querySelector('.role-tabs').style.display = 'none';
+          document.getElementById('correctionBanner').style.display = 'none';
+          
+          document.getElementById('statusCard').style.display = 'block';
+
+          document.getElementById('confRole').textContent = currentRole === 'farmer' ? 'Farmer' : 'Veterinarian';
+          document.getElementById('confName').textContent = formData.get('name');
+          document.getElementById('confEmail').textContent = formData.get('email');
+          const fileInput = document.getElementById('verification_doc');
+          document.getElementById('confDoc').textContent = (fileInput.files && fileInput.files[0]) ? fileInput.files[0].name : 'Uploaded Document';
+        } else {
+          alert(data.message || 'Submission failed. Please check details.');
+          btn.disabled = false;
+          btn.textContent = 'Submit Application for Verification';
+        }
+      } catch (err) {
+        console.error('Submission error:', err);
+        alert('Network error during registration. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Submit Application for Verification';
+      }
+    });
+
+    // Initialize required state
+    switchRole('farmer');
+  </script>
+</body>
+</html>

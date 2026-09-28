@@ -541,7 +541,8 @@
       animals.forEach(animal => {
         const option = document.createElement('option');
         option.value = animal.id;
-        option.textContent = `${animal.tag_number} (${animal.species})`;
+        const speciesLabel = animal.species ? (animal.species.charAt(0).toUpperCase() + animal.species.slice(1)) : 'Livestock';
+        option.textContent = `${animal.tag_number} — ${speciesLabel}`;
         select.appendChild(option);
       });
     } catch (error) {
@@ -1016,7 +1017,8 @@
         animals.forEach(animal => {
           const option = document.createElement('option');
           option.value = animal.id;
-          option.textContent = `${animal.tag_number} (${animal.species})`;
+          const speciesLabel = animal.species ? (animal.species.charAt(0).toUpperCase() + animal.species.slice(1)) : 'Livestock';
+          option.textContent = `${animal.tag_number} — ${speciesLabel}`;
           select.appendChild(option);
         });
       } catch (error) {

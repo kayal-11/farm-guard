@@ -14,6 +14,22 @@ CREATE TABLE IF NOT EXISTS users (
     role VARCHAR(20) NOT NULL,
     phone VARCHAR(20),
     email VARCHAR(100),
+    status VARCHAR(30) DEFAULT 'APPROVED',
+    address TEXT,
+    farm_name VARCHAR(150),
+    cattle_count INTEGER DEFAULT 0,
+    buffalo_count INTEGER DEFAULT 0,
+    goat_count INTEGER DEFAULT 0,
+    sheep_count INTEGER DEFAULT 0,
+    poultry_count INTEGER DEFAULT 0,
+    other_livestock TEXT,
+    vet_reg_number VARCHAR(100),
+    qualification VARCHAR(150),
+    vet_council_details TEXT,
+    verification_doc_path VARCHAR(255),
+    verification_doc_filename VARCHAR(255),
+    rejection_reason TEXT,
+    correction_notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
