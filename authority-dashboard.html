@@ -551,36 +551,52 @@ function drawRegionalChart(regionalData) {
   // Clear canvas
   ctx.clearRect(0, 0, width, height);
   
-  // Calculate angles
+  const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
   const total = regionalData.reduce((sum, r) => sum + r.count, 0);
+  
   if (total === 0) {
     ctx.fillStyle = '#9ca3af';
     ctx.font = '14px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('No data available', centerX, centerY);
+
+    const list = document.getElementById('regionalDistributionList');
+    if (list) {
+      list.innerHTML = '';
+      regionalData.forEach((region, index) => {
+        const div = document.createElement('div');
+        div.style.cssText = 'display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border);';
+        div.innerHTML = `
+          <span style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="display: inline-block; width: 12px; height: 12px; background: ${colors[index % colors.length]}; border-radius: 2px;"></span>
+            ${region.region}
+          </span>
+          <span style="font-weight: 600;">0% (0 entries)</span>
+        `;
+        list.appendChild(div);
+      });
+    }
     return;
   }
   
   let currentAngle = -Math.PI / 2; // Start at top
   
-  const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
-  
   // Draw pie slices
   regionalData.forEach((region, index) => {
     const sliceAngle = (region.count / total) * Math.PI * 2;
     
-    ctx.beginPath();
-    ctx.moveTo(centerX, centerY);
-    ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
-    ctx.closePath();
-    ctx.fillStyle = colors[index % colors.length];
-    ctx.fill();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    
-    // Draw label
-    if (region.count > 0) {
+    if (sliceAngle > 0) {
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
+      ctx.closePath();
+      ctx.fillStyle = colors[index % colors.length];
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      // Draw label
       const labelAngle = currentAngle + sliceAngle / 2;
       const labelX = centerX + Math.cos(labelAngle) * (radius * 0.7);
       const labelY = centerY + Math.sin(labelAngle) * (radius * 0.7);
@@ -602,12 +618,13 @@ function drawRegionalChart(regionalData) {
     regionalData.forEach((region, index) => {
       const div = document.createElement('div');
       div.style.cssText = 'display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border);';
+      const countLabel = `${region.count} ${region.count === 1 ? 'entry' : 'entries'}`;
       div.innerHTML = `
         <span style="display: flex; align-items: center; gap: 0.5rem;">
           <span style="display: inline-block; width: 12px; height: 12px; background: ${colors[index % colors.length]}; border-radius: 2px;"></span>
           ${region.region}
         </span>
-        <span style="font-weight: 600;">${region.percentage}% (${region.count} entries)</span>
+        <span style="font-weight: 600;">${region.percentage}% (${countLabel})</span>
       `;
       list.appendChild(div);
     });
