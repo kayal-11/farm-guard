@@ -1274,6 +1274,72 @@ def vet_dashboard_api():
     })
 
 
+def get_zone_from_address(address_str):
+    if not address_str:
+        return 'South Zone'
+
+    addr = str(address_str).lower().strip()
+
+    south_keywords = [
+        'erode', 'coimbatore', 'salem', 'namakkal', 'tiruppur', 'karur', 'dindigul', 'madurai',
+        'tirunelveli', 'kanyakumari', 'thanjavur', 'trichy', 'tiruchirappalli', 'vellore',
+        'kanchipuram', 'chennai', 'cuddalore', 'villupuram', 'nagapattinam', 'pudukkottai',
+        'ramanathapuram', 'sivaganga', 'theni', 'nilgiris', 'krishnagiri', 'dharmapuri',
+        'ariyalur', 'perambalur', 'tiruvarur', 'tiruvallur', 'ranipet', 'tenkasi',
+        'chengalpattu', 'kallakurichi', 'mayiladuthurai', 'tirupattur', 'tamil nadu', 'tamilnadu', 'tn',
+        'bengaluru', 'bangalore', 'mysore', 'mysuru', 'mangalore', 'mangaluru', 'hubli',
+        'dharwad', 'belgaum', 'belagavi', 'shimoga', 'shivamogga', 'hassan', 'tumkur',
+        'tumakuru', 'udupi', 'bellary', 'ballari', 'gulbarga', 'kalaburagi', 'kolar', 'mandya',
+        'davanagere', 'chikkamagaluru', 'kodagu', 'karnataka',
+        'thiruvananthapuram', 'trivandrum', 'kochi', 'ernakulam', 'kozhikode', 'calicut',
+        'thrissur', 'kollam', 'palakkad', 'malappuram', 'kannur', 'kottayam', 'alappuzha',
+        'idukki', 'pathanamthitta', 'wayanad', 'kasaragod', 'kerala',
+        'hyderabad', 'visakhapatnam', 'vizag', 'vijayawada', 'guntur', 'tirupati', 'nellore',
+        'kurnool', 'warangal', 'karimnagar', 'nizamabad', 'chittoor', 'anantapur', 'kadapa',
+        'prakasam', 'kakinada', 'rajahmundry', 'andhra', 'andhra pradesh', 'telangana', 'puducherry', 'pondicherry', 'south'
+    ]
+
+    north_keywords = [
+        'delhi', 'new delhi', 'chandigarh', 'amritsar', 'ludhiana', 'jalandhar', 'patiala',
+        'gurgaon', 'gurugram', 'noida', 'faridabad', 'panipat', 'ambala', 'shimla', 'jammu',
+        'srinagar', 'dehradun', 'lucknow', 'kanpur', 'agra', 'varanasi', 'allahabad', 'prayagraj',
+        'meerut', 'ghaziabad', 'bareilly', 'aligarh', 'mathura', 'punjab', 'haryana',
+        'himachal', 'himachal pradesh', 'jammu & kashmir', 'jammu and kashmir', 'ladakh',
+        'uttarakhand', 'uttar pradesh', 'north'
+    ]
+
+    east_keywords = [
+        'kolkata', 'howrah', 'siliguri', 'asansol', 'patna', 'gaya', 'muzaffarpur', 'bhagalpur',
+        'ranchi', 'jamshedpur', 'dhanbad', 'bhubaneswar', 'cuttack', 'puri', 'rourkela',
+        'guwahati', 'shillong', 'imphal', 'agartala', 'gangtok', 'west bengal', 'odisha',
+        'orissa', 'bihar', 'jharkhand', 'assam', 'meghalaya', 'tripura', 'mizoram',
+        'manipur', 'nagaland', 'arunachal', 'arunachal pradesh', 'sikkim', 'east'
+    ]
+
+    west_keywords = [
+        'mumbai', 'pune', 'nagpur', 'nashik', 'thane', 'aurangabad', 'chhatrapati sambhajinagar',
+        'solapur', 'kolhapur', 'sangli', 'satara', 'ahmednagar', 'jalgaon', 'amravati',
+        'nanded', 'ahmedabad', 'surat', 'vadodara', 'rajkot', 'bhavnagar', 'gandhinagar',
+        'jaipur', 'jodhpur', 'udaipur', 'kota', 'ajmer', 'bikaner', 'panaji', 'margao',
+        'maharashtra', 'gujarat', 'rajasthan', 'goa', 'daman', 'diu', 'west'
+    ]
+
+    for kw in south_keywords:
+        if kw in addr:
+            return 'South Zone'
+    for kw in north_keywords:
+        if kw in addr:
+            return 'North Zone'
+    for kw in east_keywords:
+        if kw in addr:
+            return 'East Zone'
+    for kw in west_keywords:
+        if kw in addr:
+            return 'West Zone'
+
+    return 'South Zone'
+
+
 @app.route('/api/authority/dashboard')
 @require_roles('authority')
 def authority_dashboard_api():
@@ -1330,7 +1396,7 @@ def authority_dashboard_api():
             'approved': month_approved
         })
 
-    # Regional distribution (simulated by farmer_id % 4)
+    # Regional distribution based on actual Farmer address/location
     regions = {
         'North Zone': 0,
         'South Zone': 0,
@@ -1338,20 +1404,18 @@ def authority_dashboard_api():
         'West Zone': 0
     }
 
-    for entry in AMUEntry.query.all():
-        farmer_mod = entry.farmer_id % 4
-        if farmer_mod == 0:
-            regions['North Zone'] += 1
-        elif farmer_mod == 1:
-            regions['South Zone'] += 1
-        elif farmer_mod == 2:
-            regions['East Zone'] += 1
-        else:
-            regions['West Zone'] += 1
+    all_amu_entries = AMUEntry.query.all()
+    total_amu_count = len(all_amu_entries)
+
+    for entry in all_amu_entries:
+        farmer_addr = entry.farmer.address if entry.farmer else ''
+        zone = get_zone_from_address(farmer_addr)
+        if zone in regions:
+            regions[zone] += 1
 
     regional_distribution = []
     for region, count in regions.items():
-        percentage = (count / total_entries * 100) if total_entries > 0 else 0
+        percentage = (count / total_amu_count * 100) if total_amu_count > 0 else 0
         regional_distribution.append({
             'region': region,
             'count': count,
@@ -1424,23 +1488,19 @@ def get_analytics():
             'count': count
         })
 
-    # Regional compliance (reuse simulated regions)
+    # Regional compliance based on actual Farmer address/location
     regional_compliance = []
-    regions = ['North Zone', 'South Zone', 'East Zone', 'West Zone']
+    zone_names = ['North Zone', 'South Zone', 'East Zone', 'West Zone']
+    all_amu_entries = AMUEntry.query.all()
 
-    for idx, region in enumerate(regions):
-        region_entries = []
-        all_entries = AMUEntry.query.all()
-        for e in all_entries:
-            if e.farmer_id % 4 == idx:
-                region_entries.append(e)
-
-        total = len(region_entries)
-        approved = len([e for e in region_entries if e.status == 'approved'])
+    for zone in zone_names:
+        zone_entries = [e for e in all_amu_entries if get_zone_from_address(e.farmer.address if e.farmer else '') == zone]
+        total = len(zone_entries)
+        approved = len([e for e in zone_entries if e.status == 'approved'])
         compliance = (approved / total * 100) if total > 0 else 0
 
         regional_compliance.append({
-            'region': region,
+            'region': zone,
             'compliance_rate': round(compliance, 1),
             'total_entries': total,
             'approved': approved
