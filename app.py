@@ -557,20 +557,36 @@ def user_resubmit():
 @require_roles('authority')
 def get_pending_registrations():
     status_filter = request.args.get('status')
-    if status_filter:
-        users = User.query.filter(User.status == status_filter.upper()).order_by(User.created_at.desc()).all()
+    role_filter = request.args.get('role')
+    
+    if status_filter and status_filter.upper() == 'ALL':
+        query = User.query.filter(User.status.in_(['PENDING', 'CORRECTION_REQUESTED', 'REJECTED', 'APPROVED']))
+    elif status_filter:
+        query = User.query.filter(User.status == status_filter.upper())
     else:
-        users = User.query.filter(User.status.in_(['PENDING', 'CORRECTION_REQUESTED', 'REJECTED'])).order_by(User.created_at.desc()).all()
+        # Authority sees only registrations that currently require action (status = PENDING)
+        query = User.query.filter(User.status == 'PENDING')
 
+    if role_filter and role_filter.lower() in ['farmer', 'vet']:
+        query = query.filter(User.role == role_filter.lower())
+
+    users = query.order_by(User.created_at.desc()).all()
     return jsonify([u.to_dict() for u in users])
 
 
 @app.route('/api/authority/user-details/<int:user_id>', methods=['GET'])
-@require_roles('authority')
 def get_user_details(user_id):
     user = db.session.get(User, user_id)
     if not user:
         return jsonify({'error': 'User not found'}), 404
+
+    current_user_id = session.get('user_id')
+    current_role = session.get('role')
+
+    # Allow authority, the user themselves, or resubmitting applicants
+    if current_role != 'authority' and current_user_id != user_id and user.status not in ['CORRECTION_REQUESTED', 'REJECTED', 'PENDING']:
+        return jsonify({'error': 'Forbidden', 'message': 'Access to user details denied'}), 403
+
     return jsonify(user.to_dict())
 
 
@@ -2328,195 +2344,181 @@ def init_db():
             db.session.commit()
 
 
-            if User.query.count() == 0:
-                print("Adding sample data...")
-                farmer = User(
-                    identifier='FARM001',
-                    password_hash=generate_password_hash('password123'),
-                    name='Rajesh Kumar',
-                    role='farmer',
-                    phone='9876543210'
-                )
+            # Ensure default system accounts exist
+            default_accounts = [
+                {'identifier': 'FARM001', 'password': 'password123', 'name': 'Rajesh Kumar', 'role': 'farmer', 'phone': '9876543210', 'status': 'APPROVED'},
+                {'identifier': 'kayalvizhi110906', 'password': 'password123', 'name': 'Kayalvizhi', 'role': 'farmer', 'phone': '', 'status': 'APPROVED'},
+                {'identifier': 'VET001', 'password': 'password123', 'name': 'Dr. Priya Sharma', 'role': 'vet', 'email': 'priya.sharma@vet.com', 'status': 'APPROVED'},
+                {'identifier': 'AUTH001', 'password': 'password123', 'name': 'Admin User', 'role': 'authority', 'email': 'admin@authority.gov.in', 'status': 'APPROVED'}
+            ]
 
-                custom_farmer = User(
-                    identifier='kayalvizhi110906',
-                    password_hash=generate_password_hash('password123'),
-                    name='Kayalvizhi',
-                    role='farmer',
-                    phone=''
-                )
-
-                vet = User(
-                    identifier='VET001',
-                    password_hash=generate_password_hash('password123'),
-                    name='Dr. Priya Sharma',
-                    role='vet',
-                    email='priya.sharma@vet.com'
-                )
-
-                authority = User(
-                    identifier='AUTH001',
-                    password_hash=generate_password_hash('password123'),
-                    name='Admin User',
-                    role='authority',
-                    email='admin@authority.gov.in'
-                )
-
-                db.session.add_all([farmer, vet, authority, custom_farmer])
-
-                drugs = [
-                    Drug(
-                        name='Amoxicillin',
-                        active_ingredient='Amoxicillin Trihydrate',
-                        species='cattle, buffalo, goat, sheep, swine',
-                        route='Intramuscular, Oral',
-                        indication='Respiratory tract infection, Mastitis, Metritis, Enteritis',
-                        withdrawal_period_days=5,
-                        max_dosage=15.0,
-                        unit='mg/kg',
-                        source='CDSCO (Central Drugs Standard Control Organisation, India)',
-                        source_date='2024-03-10',
-                        mrl_info='Codex/FSSAI MRL: 50 µg/kg in muscle/liver/kidney, 4 µg/kg in milk.'
-                    ),
-                    Drug(
-                        name='Ceftiofur Sodium',
-                        active_ingredient='Ceftiofur',
-                        species='cattle, buffalo, swine',
-                        route='Subcutaneous, Intramuscular',
-                        indication='Bovine respiratory disease, Foot rot, Acute metritis',
-                        withdrawal_period_days=4,
-                        max_dosage=2.2,
-                        unit='mg/kg',
-                        source='CDSCO (Central Drugs Standard Control Organisation, India)',
-                        source_date='2023-11-20',
-                        mrl_info='Codex/FSSAI MRL: 1000 µg/kg in muscle, 2000 µg/kg in kidney, 100 µg/kg in milk.'
-                    ),
-                    Drug(
-                        name='Enrofloxacin',
-                        active_ingredient='Enrofloxacin',
-                        species='cattle, buffalo, goat, poultry',
-                        route='Injectable, Intramuscular, Subcutaneous, Oral',
-                        indication='Complex respiratory disease, Colibacillosis, CCPP',
-                        withdrawal_period_days=10,
-                        max_dosage=5.0,
-                        unit='mg/kg',
-                        source='CDSCO & WHO MIA Guidelines',
-                        source_date='2024-01-15',
-                        mrl_info='Codex/FSSAI MRL: 100 µg/kg (combined enrofloxacin + ciprofloxacin) in muscle.'
-                    ),
-                    Drug(
-                        name='Oxytetracycline',
-                        active_ingredient='Oxytetracycline',
-                        species='cattle, buffalo, goat, sheep, swine',
-                        route='Intramuscular, Intravenous',
-                        indication='Anaplasmosis, Blackquarter, HS, Pneumonia, Foot rot',
-                        withdrawal_period_days=7,
-                        max_dosage=10.0,
-                        unit='mg/kg',
-                        source='CDSCO (Central Drugs Standard Control Organisation, India)',
-                        source_date='2024-02-01',
-                        mrl_info='Codex/FSSAI MRL: 100 µg/kg in muscle, 300 µg/kg in liver, 600 µg/kg in kidney.'
-                    ),
-                    Drug(
-                        name='Penicillin G Procaine',
-                        active_ingredient='Procaine Penicillin G',
-                        species='cattle, buffalo, goat, horse, sheep',
-                        route='Intramuscular',
-                        indication='Blackleg, Mastitis, Erysipelas, Gram-positive infection',
-                        withdrawal_period_days=14,
-                        max_dosage=20000.0,
-                        unit='IU/kg',
-                        source='CDSCO (Central Drugs Standard Control Organisation, India)',
-                        source_date='2023-09-05',
-                        mrl_info='Codex/FSSAI MRL: 50 µg/kg in muscle, 4 µg/kg in milk.'
-                    ),
-                    Drug(
-                        name='Sulfadimidine Sodium',
-                        active_ingredient='Sulfadimidine',
-                        species='cattle, buffalo, goat, poultry, sheep',
-                        route='Oral, Intravenous, Subcutaneous',
-                        indication='Coccidiosis, Calf diphtheria, Bacterial enteritis',
-                        withdrawal_period_days=10,
-                        max_dosage=100.0,
-                        unit='mg/kg',
-                        source='CDSCO (Central Drugs Standard Control Organisation, India)',
-                        source_date='2023-12-12',
-                        mrl_info='Codex/FSSAI MRL: 100 µg/kg total sulfonamide residues.'
-                    ),
-                    Drug(
-                        name='Tylosin Tartrate',
-                        active_ingredient='Tylosin',
-                        species='cattle, buffalo, goat, poultry, swine',
-                        route='Intramuscular, Oral',
-                        indication='Bovine respiratory complex, Mycoplasmosis, Foot rot',
-                        withdrawal_period_days=21,
-                        max_dosage=10.0,
-                        unit='mg/kg',
-                        source='CDSCO (Central Drugs Standard Control Organisation, India)',
-                        source_date='2024-04-18',
-                        mrl_info='Codex/FSSAI MRL: 100 µg/kg in muscle, 50 µg/kg in milk.'
+            for acc in default_accounts:
+                if not User.query.filter_by(identifier=acc['identifier']).first():
+                    u = User(
+                        identifier=acc['identifier'],
+                        password_hash=generate_password_hash(acc['password']),
+                        name=acc['name'],
+                        role=acc['role'],
+                        phone=acc.get('phone', ''),
+                        email=acc.get('email', ''),
+                        status=acc.get('status', 'APPROVED')
                     )
-                ]
-                db.session.add_all(drugs)
-                db.session.commit()
+                    db.session.add(u)
+            db.session.commit()
 
-                animals = [
-                    Animal(tag_number='CATTLE-001', species='cattle', farmer_id=farmer.id),
-                    Animal(tag_number='CATTLE-002', species='cattle', farmer_id=farmer.id),
-                    Animal(tag_number='BUFFALO-001', species='buffalo', farmer_id=farmer.id),
-                    Animal(tag_number='GOAT-001', species='goat', farmer_id=farmer.id),
-                    Animal(tag_number='CATTLE-003', species='cattle', farmer_id=custom_farmer.id),
-                    Animal(tag_number='BUFFALO-002', species='buffalo', farmer_id=custom_farmer.id),
-                    Animal(tag_number='GOAT-002', species='goat', farmer_id=custom_farmer.id),
-                ]
-                db.session.add_all(animals)
-                db.session.commit()
-
-                # Seed sample AMU entry and RAG evidence
-                today = datetime.now().date()
-                sample_amu = AMUEntry(
-                    entry_id='AMU-2026-001',
-                    farmer_id=farmer.id,
-                    animal_id=animals[0].id,
-                    drug_id=drugs[3].id,  # Oxytetracycline
-                    dosage=10.0,
+            drugs = [
+                Drug(
+                    name='Amoxicillin',
+                    active_ingredient='Amoxicillin Trihydrate',
+                    species='cattle, buffalo, goat, sheep, swine',
+                    route='Intramuscular, Oral',
+                    indication='Respiratory tract infection, Mastitis, Metritis, Enteritis',
+                    withdrawal_period_days=5,
+                    max_dosage=15.0,
                     unit='mg/kg',
-                    route='Intramuscular',
-                    indication='Pneumonia',
-                    treatment_date=today,
-                    withdrawal_end_date=today + timedelta(days=7),
-                    status='pending'
-                )
-                db.session.add(sample_amu)
-                db.session.commit()
-
-                rag_res = rag_engine_instance.retrieve_evidence(
-                    drug_name=drugs[3].name,
-                    species='cattle',
-                    route='Intramuscular',
-                    indication='Pneumonia',
-                    dosage=10.0,
+                    source='CDSCO (Central Drugs Standard Control Organisation, India)',
+                    source_date='2024-03-10',
+                    mrl_info='Codex/FSSAI MRL: 50 µg/kg in muscle/liver/kidney, 4 µg/kg in milk.'
+                ),
+                Drug(
+                    name='Ceftiofur Sodium',
+                    active_ingredient='Ceftiofur',
+                    species='cattle, buffalo, swine',
+                    route='Subcutaneous, Intramuscular',
+                    indication='Bovine respiratory disease, Foot rot, Acute metritis',
+                    withdrawal_period_days=4,
+                    max_dosage=2.2,
                     unit='mg/kg',
-                    treatment_date=today.isoformat()
+                    source='CDSCO (Central Drugs Standard Control Organisation, India)',
+                    source_date='2023-11-20',
+                    mrl_info='Codex/FSSAI MRL: 1000 µg/kg in muscle, 2000 µg/kg in kidney, 100 µg/kg in milk.'
+                ),
+                Drug(
+                    name='Enrofloxacin',
+                    active_ingredient='Enrofloxacin',
+                    species='cattle, buffalo, goat, poultry',
+                    route='Injectable, Intramuscular, Subcutaneous, Oral',
+                    indication='Complex respiratory disease, Colibacillosis, CCPP',
+                    withdrawal_period_days=10,
+                    max_dosage=5.0,
+                    unit='mg/kg',
+                    source='CDSCO & WHO MIA Guidelines',
+                    source_date='2024-01-15',
+                    mrl_info='Codex/FSSAI MRL: 100 µg/kg (combined enrofloxacin + ciprofloxacin) in muscle.'
+                ),
+                Drug(
+                    name='Oxytetracycline',
+                    active_ingredient='Oxytetracycline',
+                    species='cattle, buffalo, goat, sheep, swine',
+                    route='Intramuscular, Intravenous',
+                    indication='Anaplasmosis, Blackquarter, HS, Pneumonia, Foot rot',
+                    withdrawal_period_days=7,
+                    max_dosage=10.0,
+                    unit='mg/kg',
+                    source='CDSCO (Central Drugs Standard Control Organisation, India)',
+                    source_date='2024-02-01',
+                    mrl_info='Codex/FSSAI MRL: 100 µg/kg in muscle, 300 µg/kg in liver, 600 µg/kg in kidney.'
+                ),
+                Drug(
+                    name='Penicillin G Procaine',
+                    active_ingredient='Procaine Penicillin G',
+                    species='cattle, buffalo, goat, horse, sheep',
+                    route='Intramuscular',
+                    indication='Blackleg, Mastitis, Erysipelas, Gram-positive infection',
+                    withdrawal_period_days=14,
+                    max_dosage=20000.0,
+                    unit='IU/kg',
+                    source='CDSCO (Central Drugs Standard Control Organisation, India)',
+                    source_date='2023-09-05',
+                    mrl_info='Codex/FSSAI MRL: 50 µg/kg in muscle, 4 µg/kg in milk.'
+                ),
+                Drug(
+                    name='Sulfadimidine Sodium',
+                    active_ingredient='Sulfadimidine',
+                    species='cattle, buffalo, goat, poultry, sheep',
+                    route='Oral, Intravenous, Subcutaneous',
+                    indication='Coccidiosis, Calf diphtheria, Bacterial enteritis',
+                    withdrawal_period_days=10,
+                    max_dosage=100.0,
+                    unit='mg/kg',
+                    source='CDSCO (Central Drugs Standard Control Organisation, India)',
+                    source_date='2023-12-12',
+                    mrl_info='Codex/FSSAI MRL: 100 µg/kg total sulfonamide residues.'
+                ),
+                Drug(
+                    name='Tylosin Tartrate',
+                    active_ingredient='Tylosin',
+                    species='cattle, buffalo, goat, poultry, swine',
+                    route='Intramuscular, Oral',
+                    indication='Bovine respiratory complex, Mycoplasmosis, Foot rot',
+                    withdrawal_period_days=21,
+                    max_dosage=10.0,
+                    unit='mg/kg',
+                    source='CDSCO (Central Drugs Standard Control Organisation, India)',
+                    source_date='2024-04-18',
                 )
-                sample_rag = RAGEvidence(
-                    amu_entry_id=sample_amu.id,
-                    document_title=rag_res['document_title'],
-                    retrieved_chunk=rag_res['retrieved_chunk'],
-                    source_reference=rag_res['source_reference'],
-                    recommended_withdrawal_days=rag_res['recommended_withdrawal_days'],
-                    max_allowed_dosage=rag_res['max_allowed_dosage'],
-                    mrl_info=rag_res['mrl_info'],
-                    regulatory_summary=rag_res['regulatory_summary'],
-                    verification_status=rag_res['verification_status'],
-                    verification_details=rag_res['verification_details']
-                )
-                db.session.add(sample_rag)
-                db.session.commit()
+            ]
+            db.session.add_all(drugs)
+            db.session.commit()
 
-                print("[OK] Sample data added successfully!")
-            else:
-                print("[OK] Database already has data.")
+            if Animal.query.count() == 0:
+                farmer = User.query.filter_by(identifier='FARM001').first()
+                custom_farmer = User.query.filter_by(identifier='kayalvizhi110906').first()
+                if farmer and custom_farmer:
+                    animals = [
+                        Animal(tag_number='CATTLE-001', species='cattle', farmer_id=farmer.id),
+                        Animal(tag_number='CATTLE-002', species='cattle', farmer_id=farmer.id),
+                        Animal(tag_number='BUFFALO-001', species='buffalo', farmer_id=farmer.id),
+                        Animal(tag_number='GOAT-001', species='goat', farmer_id=farmer.id),
+                        Animal(tag_number='CATTLE-003', species='cattle', farmer_id=custom_farmer.id),
+                        Animal(tag_number='BUFFALO-002', species='buffalo', farmer_id=custom_farmer.id),
+                        Animal(tag_number='GOAT-002', species='goat', farmer_id=custom_farmer.id),
+                    ]
+                    db.session.add_all(animals)
+                    db.session.commit()
+
+                    if AMUEntry.query.count() == 0 and len(drugs) > 3:
+                        today = datetime.now().date()
+                        sample_amu = AMUEntry(
+                            entry_id='AMU-2026-001',
+                            farmer_id=farmer.id,
+                            animal_id=animals[0].id,
+                            drug_id=drugs[3].id,  # Oxytetracycline
+                            dosage=10.0,
+                            unit='mg/kg',
+                            route='Intramuscular',
+                            indication='Pneumonia',
+                            treatment_date=today,
+                            withdrawal_end_date=today + timedelta(days=7),
+                            status='pending'
+                        )
+                        db.session.add(sample_amu)
+                        db.session.commit()
+
+                        rag_res = rag_engine_instance.retrieve_evidence(
+                            drug_name=drugs[3].name,
+                            species='cattle',
+                            route='Intramuscular',
+                            indication='Pneumonia',
+                            dosage=10.0,
+                            unit='mg/kg',
+                            treatment_date=today.isoformat()
+                        )
+                        sample_rag = RAGEvidence(
+                            amu_entry_id=sample_amu.id,
+                            document_title=rag_res['document_title'],
+                            retrieved_chunk=rag_res['retrieved_chunk'],
+                            source_reference=rag_res['source_reference'],
+                            recommended_withdrawal_days=rag_res['recommended_withdrawal_days'],
+                            max_allowed_dosage=rag_res['max_allowed_dosage'],
+                            mrl_info=rag_res['mrl_info'],
+                            regulatory_summary=rag_res['regulatory_summary'],
+                            verification_status=rag_res['verification_status'],
+                            verification_details=rag_res['verification_details']
+                        )
+                        db.session.add(sample_rag)
+                        db.session.commit()
+                print("[OK] Sample data initialized successfully.")
 
 
             custom_user = User.query.filter_by(identifier='kayalvizhi110906', role='farmer').first()

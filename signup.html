@@ -119,9 +119,9 @@
       </div>
 
       <div class="signup-card">
-        <!-- Correction Request Banner (If resubmitting) -->
+        <!-- Correction Request / Rejection Banner (If resubmitting) -->
         <div id="correctionBanner" class="correction-banner" style="display: none;">
-          <strong>⚠️ Action Required from Authority:</strong>
+          <strong id="correctionBannerTitle">⚠️ Action Required from Authority:</strong>
           <p id="correctionNotesText" style="margin-top: 0.25rem;"></p>
         </div>
 
@@ -379,7 +379,19 @@
           if (user.status === 'CORRECTION_REQUESTED' && user.correction_notes) {
             const banner = document.getElementById('correctionBanner');
             banner.style.display = 'block';
+            banner.style.background = '#e3f2fd';
+            banner.style.borderColor = '#90caf9';
+            banner.style.color = '#0d47a1';
+            document.getElementById('correctionBannerTitle').textContent = '⚠️ Authority Requested Correction:';
             document.getElementById('correctionNotesText').textContent = user.correction_notes;
+          } else if (user.status === 'REJECTED' && user.rejection_reason) {
+            const banner = document.getElementById('correctionBanner');
+            banner.style.display = 'block';
+            banner.style.background = '#ffebee';
+            banner.style.borderColor = '#ef9a9a';
+            banner.style.color = '#b71c1c';
+            document.getElementById('correctionBannerTitle').textContent = '❌ Previous Application Rejected by Authority:';
+            document.getElementById('correctionNotesText').textContent = user.rejection_reason + ' — Please update your details and resubmit for verification.';
           }
 
           document.getElementById('password').removeAttribute('required');

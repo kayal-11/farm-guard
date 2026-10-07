@@ -138,15 +138,36 @@
               ⏳ Pending Registrations Verification
               <span class="badge badge-warning" id="pendingCountBadge">0 Pending</span>
             </h3>
-            <p class="card-description">Review submitted credentials and verification documents for Farmers and Veterinarians</p>
+            <p class="card-description">Review submitted credentials and verification documents for Farmers and Veterinarians requiring action</p>
           </div>
-          <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;" id="pendingFilterBtns">
-            <button class="btn btn-primary btn-sm filter-btn" onclick="filterPendingRegs('ALL', this)">All</button>
-            <button class="btn btn-outline btn-sm filter-btn" onclick="filterPendingRegs('PENDING', this)">Pending</button>
-            <button class="btn btn-outline btn-sm filter-btn" onclick="filterPendingRegs('CORRECTION_REQUESTED', this)">Correction Requested</button>
-            <button class="btn btn-outline btn-sm filter-btn" onclick="filterPendingRegs('REJECTED', this)">Rejected</button>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <label for="pendingStatusSelect" style="font-size: 0.85rem; color: var(--muted-foreground); font-weight: 500;">Filter View:</label>
+            <select id="pendingStatusSelect" class="form-control" style="padding: 0.35rem 0.75rem; font-size: 0.85rem; border-radius: var(--radius); border: 1px solid var(--border);" onchange="handlePendingStatusFilterChange(this.value)">
+              <option value="PENDING" selected>Action Required (Pending Only)</option>
+              <option value="CORRECTION_REQUESTED">Correction Requested</option>
+              <option value="REJECTED">Rejected</option>
+              <option value="APPROVED">Approved</option>
+              <option value="ALL">All Applications (History)</option>
+            </select>
           </div>
         </div>
+
+        <!-- Separate Tabs for Farmer Registrations and Veterinarian Registrations with separate counts -->
+        <div style="padding: 1rem 1.5rem 0.5rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: var(--muted);" id="pendingRoleTabs">
+          <button class="role-tab active" id="tabFarmerRegs" onclick="switchPendingRoleTab('farmer', this)" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.25rem; border-radius: var(--radius); border: 1px solid var(--border); cursor: pointer;">
+            👨‍🌾 Farmer Registrations
+            <span class="badge badge-warning" id="farmerPendingBadge">0 Pending</span>
+          </button>
+          <button class="role-tab" id="tabVetRegs" onclick="switchPendingRoleTab('vet', this)" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.25rem; border-radius: var(--radius); border: 1px solid var(--border); cursor: pointer;">
+            👨‍⚕️ Veterinarian Registrations
+            <span class="badge badge-warning" id="vetPendingBadge">0 Pending</span>
+          </button>
+          <button class="role-tab" id="tabAllRegs" onclick="switchPendingRoleTab('all', this)" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.25rem; border-radius: var(--radius); border: 1px solid var(--border); cursor: pointer;">
+            📑 All Registrations
+            <span class="badge badge-outline" id="allPendingBadge">0 Total</span>
+          </button>
+        </div>
+
         <div class="card-content" style="padding-top: 1rem;">
           <div class="table-container">
             <table>
@@ -715,7 +736,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // PENDING REGISTRATIONS VERIFICATION SYSTEM
 // ============================================
 let pendingUsersData = [];
-let currentFilter = 'ALL';
+let currentPendingRoleTab = 'farmer';
+let currentPendingStatusFilter = 'PENDING';
 let activeSelectedUserId = null;
 
 function scrollToPendingSection(e) {
@@ -759,7 +781,7 @@ function closeModal(id) {
 
 async function loadPendingRegistrations() {
   try {
-    const res = await fetch('/api/authority/pending-registrations');
+    const res = await fetch(`/api/authority/pending-registrations?status=${currentPendingStatusFilter}`);
     if (res.ok) {
       pendingUsersData = await res.json();
       renderPendingRegistrationsTable();
@@ -769,49 +791,63 @@ async function loadPendingRegistrations() {
   }
 }
 
-function filterPendingRegs(statusFilter, btnEl) {
-  currentFilter = statusFilter;
-  const container = document.getElementById('pendingFilterBtns');
+function switchPendingRoleTab(roleTab, btnEl) {
+  currentPendingRoleTab = roleTab;
+  const container = document.getElementById('pendingRoleTabs');
   if (container) {
-    container.querySelectorAll('.filter-btn').forEach(b => {
-      b.classList.remove('btn-primary');
-      b.classList.add('btn-outline');
-    });
+    container.querySelectorAll('.role-tab').forEach(b => b.classList.remove('active'));
   }
-  if (btnEl) {
-    btnEl.classList.remove('btn-outline');
-    btnEl.classList.add('btn-primary');
-  }
+  if (btnEl) btnEl.classList.add('active');
   renderPendingRegistrationsTable();
+}
+
+function handlePendingStatusFilterChange(statusVal) {
+  currentPendingStatusFilter = statusVal;
+  loadPendingRegistrations();
 }
 
 function renderPendingRegistrationsTable() {
   const tbody = document.getElementById('pendingRegistrationsTableBody');
   const countBadge = document.getElementById('pendingCountBadge');
   const sidebarBadge = document.getElementById('pendingSidebarBadge');
+  const farmerBadge = document.getElementById('farmerPendingBadge');
+  const vetBadge = document.getElementById('vetPendingBadge');
+  const allBadge = document.getElementById('allPendingBadge');
   if (!tbody) return;
 
-  let filtered = pendingUsersData;
-  if (currentFilter !== 'ALL') {
-    filtered = pendingUsersData.filter(u => u.status === currentFilter);
-  }
+  // Separate pending counts (specifically status === PENDING requiring action)
+  const farmerPendingCount = pendingUsersData.filter(u => u.role === 'farmer' && u.status === 'PENDING').length;
+  const vetPendingCount = pendingUsersData.filter(u => u.role === 'vet' && u.status === 'PENDING').length;
+  const totalPendingAction = farmerPendingCount + vetPendingCount;
 
-  const pendingOnlyCount = pendingUsersData.filter(u => u.status === 'PENDING').length;
-  if (countBadge) countBadge.textContent = `${pendingOnlyCount} Pending`;
+  if (farmerBadge) farmerBadge.textContent = `${farmerPendingCount} Pending`;
+  if (vetBadge) vetBadge.textContent = `${vetPendingCount} Pending`;
+  if (allBadge) allBadge.textContent = `${pendingUsersData.length} Total`;
+  if (countBadge) countBadge.textContent = `${totalPendingAction} Pending`;
+
   if (sidebarBadge) {
-    if (pendingOnlyCount > 0) {
-      sidebarBadge.textContent = pendingOnlyCount;
+    if (totalPendingAction > 0) {
+      sidebarBadge.textContent = totalPendingAction;
       sidebarBadge.style.display = 'inline-block';
     } else {
       sidebarBadge.style.display = 'none';
     }
   }
 
+  // Filter list based on selected role tab
+  let filtered = pendingUsersData;
+  if (currentPendingRoleTab === 'farmer') {
+    filtered = pendingUsersData.filter(u => u.role === 'farmer');
+  } else if (currentPendingRoleTab === 'vet') {
+    filtered = pendingUsersData.filter(u => u.role === 'vet');
+  }
+
   if (filtered.length === 0) {
+    const tabLabel = currentPendingRoleTab === 'farmer' ? 'Farmer' : currentPendingRoleTab === 'vet' ? 'Veterinarian' : 'All';
     tbody.innerHTML = `
       <tr>
         <td colspan="7" style="text-align: center; color: var(--muted-foreground); padding: 2rem;">
-          No registration applications found for filter: <strong>${escapeHtml(currentFilter)}</strong>
+          No <strong>${tabLabel}</strong> registration applications found requiring action.
         </td>
       </tr>`;
     return;
@@ -860,10 +896,10 @@ function renderPendingRegistrationsTable() {
         <td>${statusBadge}</td>
         <td>
           <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
-            <button class="btn btn-sm btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="viewUserDetailsModal(${u.id})">🔍 Details</button>
-            ${u.status !== 'APPROVED' ? `<button class="btn btn-sm btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: var(--success); border-color: var(--success);" onclick="verifyUserAction(${u.id}, 'approve')">✓ Approve</button>` : ''}
-            ${u.status !== 'REJECTED' ? `<button class="btn btn-sm btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; color: var(--destructive); border-color: var(--destructive);" onclick="openRejectModal(${u.id})">❌ Reject</button>` : ''}
-            ${u.status !== 'CORRECTION_REQUESTED' ? `<button class="btn btn-sm btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; color: var(--warning); border-color: var(--warning);" onclick="openCorrectionModal(${u.id})">✏️ Correction</button>` : ''}
+            <button class="btn btn-sm btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="viewUserDetailsModal(${u.id})" title="Details – view complete submitted information and uploaded verification documents">🔍 Details</button>
+            ${u.status !== 'APPROVED' ? `<button class="btn btn-sm btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: var(--success); border-color: var(--success);" onclick="verifyUserAction(${u.id}, 'approve')" title="Approve registration">✓ Approve</button>` : ''}
+            ${u.status !== 'CORRECTION_REQUESTED' ? `<button class="btn btn-sm btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; color: #d97706; border-color: #f59e0b;" onclick="openCorrectionModal(${u.id})" title="Request Correction – send a correction message to applicant">✏️ Request Correction</button>` : ''}
+            ${u.status !== 'REJECTED' ? `<button class="btn btn-sm btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; color: var(--destructive); border-color: var(--destructive);" onclick="openRejectModal(${u.id})" title="Reject – reject the registration with a mandatory reason">❌ Reject</button>` : ''}
           </div>
         </td>
       </tr>

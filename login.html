@@ -215,8 +215,10 @@
           let actionHtml = '';
           if (data.status === 'APPROVED') {
             actionHtml = `<div style="margin-top: 0.75rem;"><button class="btn btn-primary btn-sm" onclick="closeCheckStatusModal(); document.getElementById('identifier').value='${data.email || data.phone}';">Sign In Now</button></div>`;
+          } else if (data.status === 'REJECTED') {
+            actionHtml = `<div style="margin-top: 0.75rem;"><a href="signup.html?resubmit=true&user_id=${data.user_id}" class="btn btn-primary btn-sm">✏️ Re-apply / Edit & Re-submit</a></div>`;
           } else if (data.status === 'CORRECTION_REQUESTED') {
-            actionHtml = `<div style="margin-top: 0.75rem;"><a href="signup.html?resubmit=true&user_id=${data.user_id}" class="btn btn-primary btn-sm">Update & Resubmit</a></div>`;
+            actionHtml = `<div style="margin-top: 0.75rem;"><a href="signup.html?resubmit=true&user_id=${data.user_id}" class="btn btn-primary btn-sm">✏️ Edit & Re-submit Details</a></div>`;
           }
 
           resDiv.style.cssText = bgStyle + ' padding: 1rem; border-radius: var(--radius); font-size: 0.875rem;';
@@ -264,10 +266,12 @@
         } else if (data.status === 'PENDING') {
           showAlert('PENDING', '⏳ Registration Pending', 'Your registration is pending Authority verification.');
         } else if (data.status === 'REJECTED') {
-          showAlert('REJECTED', '❌ Registration Rejected', data.message || 'Your registration was rejected by Authority.');
+          const userId = data.user_id || (data.user ? data.user.id : '');
+          const actionBtnHtml = userId ? `<a href="signup.html?resubmit=true&user_id=${userId}" class="btn btn-primary btn-sm">✏️ Re-apply / Edit & Re-submit</a>` : '';
+          showAlert('REJECTED', '❌ Registration Rejected', data.message || 'Your registration was rejected by Authority.', actionBtnHtml);
         } else if (data.status === 'CORRECTION_REQUESTED') {
-          const userId = data.user ? data.user.id : '';
-          const actionBtnHtml = `<a href="signup.html?resubmit=true&user_id=${userId}" class="btn btn-primary btn-sm">✏️ Update & Resubmit Details</a>`;
+          const userId = data.user_id || (data.user ? data.user.id : '');
+          const actionBtnHtml = userId ? `<a href="signup.html?resubmit=true&user_id=${userId}" class="btn btn-primary btn-sm">✏️ Edit & Re-submit Details</a>` : '';
           showAlert('CORRECTION_REQUESTED', '⚠️ Correction Requested', data.message || 'Authority requested corrections for your registration.', actionBtnHtml);
         } else {
           showAlert('danger', 'Sign In Failed', data.message || 'Invalid credentials. Please try again.');
