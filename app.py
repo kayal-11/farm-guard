@@ -2603,3 +2603,5 @@ if __name__ == '__main__':
     port = int(os.getenv('PORT', 5001))
     print(f"Starting FarmGuard server on http://127.0.0.1:{port}")
     app.run(debug=False, host='0.0.0.0', port=port)
+else:
+    init_db()
